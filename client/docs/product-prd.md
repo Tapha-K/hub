@@ -6,6 +6,16 @@
 - 이 문서는 Wiki P0/P1 범위를 구현 가능한 PC 웹 MVP 요구사항으로 구체화한다.
 - 화면 흐름은 `client/docs/user-flow.md`, 클릭 단위 UI 명세는 `client/docs/click-unit-ui-spec.md`, 컴포넌트 구현 노트는 `client/docs/component-implementation-notes.md`를 따른다.
 - 토론 기록과 UX 검토는 `client/docs/archive/`에 보관하며, 구현 기준으로 직접 사용하지 않는다.
+- 핵심 흐름 검증용 정적 프로토타입은 [`client/prototype/index.html`](../prototype/index.html)에서 확인한다.
+
+## 프로토타입 바로 보기
+
+- 파일: [`client/prototype/index.html`](../prototype/index.html)
+- 로컬 서버: `npm run dev` 실행 후 `http://localhost:5173/prototype/`
+- 목적: 실제 구현 전, 핵심 루프가 사용자가 이해할 수 있는 순서로 보이는지 검증한다.
+- 범위: `빠른 시작 -> 시작 전 확인 방 상세 -> 타이머 종료/기록 대기 -> 완료 기록 -> 내 기록/다시 읽기`.
+- 동료 피드백 반영: 빠른 시작이 바로 타이머로 가지 않는 혼란, `기록 대기` 복귀 경로, 샘플 제외 목표 진행률을 프로토타입에서 우선 확인한다.
+- 위치: 프로토타입은 나중에 제거하기 쉽도록 앱 구현 코드와 분리해 `client/prototype/` 아래에 둔다.
 
 ## 제품 본질
 

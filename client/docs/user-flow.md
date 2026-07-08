@@ -22,6 +22,7 @@
 - 컴포넌트별 책임, props, state, handler 후보는 `client/docs/component-implementation-notes.md`에서 관리한다.
 - 설계 토론 근거는 `client/docs/archive/agent-discussion-summary.md`에 보관한다.
 - UX 위험 검토는 `client/docs/archive/ux-friction-review.md`에 보관한다.
+- 핵심 루프의 화면 연결은 [`client/prototype/index.html`](../prototype/index.html) 정적 프로토타입에서 먼저 확인한다.
 
 ## 전체 흐름
 
