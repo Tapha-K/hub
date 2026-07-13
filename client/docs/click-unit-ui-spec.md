@@ -171,8 +171,8 @@ draftState
 
 - 조건: 책 상세가 열려 있다. 읽기 준비 상태가 아니어도 사용자가 직접 기록을 남길 수 있다.
 - 즉시 화면 반응: 세션 기록 dialog를 연다.
-- 상태 변화: `isRecordDialogOpen = true`, `draftRecord.startPage = nextStartPage`, 나머지 draft를 초기화한다.
-- 예외: 사용자는 제안된 시작 페이지를 기록 폼에서 수정할 수 있다.
+- 상태 변화: `isRecordDialogOpen = true`, `draftRecord.endPage = ''`, `draftRecord.startPageOverride = null`로 초기화한다.
+- 예외: 기본 시작 위치는 `nextStartPage`로 계산하며, 사용자는 예외 상황에서만 직접 바꿀 수 있다.
 
 ### 표시: 세션 기록 페이지
 
@@ -190,12 +190,19 @@ draftState
 
 ## 5. 세션 기록 저장
 
-### 입력: 시작 페이지와 끝 페이지
+### 입력: 끝난 페이지
 
 - 조건: 세션 기록 dialog가 열려 있다.
-- 즉시 화면 반응: `draftRecord.startPage`, `draftRecord.endPage`를 갱신한다.
+- 즉시 화면 반응: `draftRecord.endPage`를 갱신하고, 자동 시작 위치부터 끝난 페이지까지의 범위를 미리 보여 준다.
 - 상태 변화: 페이지 검증 오류가 있었다면 입력 시 해제할 수 있다.
-- 예외: 시작 페이지는 제안값이지만 수정 가능하다.
+- 예외: 끝난 페이지는 기본 또는 직접 지정한 시작 위치보다 작을 수 없다.
+
+### 클릭: 시작 위치 직접 바꾸기
+
+- 조건: 사용자가 다시 읽기나 건너뛰기처럼 자동 시작 위치와 다른 곳에서 읽었다.
+- 즉시 화면 반응: 시작 페이지 입력을 추가로 보여 준다.
+- 상태 변화: `draftRecord.startPageOverride`를 편집할 수 있다.
+- 예외: 이 입력은 기본적으로 접혀 있으며, 비워 두면 `nextStartPage`를 사용한다.
 
 ### 입력: 짧은 감상
 
@@ -213,14 +220,14 @@ draftState
 
 ### 클릭: 기록 페이지 추가
 
-- 조건: 시작·끝 페이지가 1 이상의 정수이고 끝 페이지가 시작 페이지보다 작지 않다.
+- 조건: 끝난 페이지가 1 이상의 정수이고 자동 또는 직접 지정한 시작 위치보다 작지 않다.
 - 즉시 화면 반응: 제출 버튼이 loading 상태가 된다.
 - 상태 변화:
   - `POST /api/books/{bookId}/records` 성공 후 서버 응답으로 책 상세의 records와 bookmark summary를 갱신한다.
   - dialog를 닫고 `isReadingContextActive = false`로 바꾼다.
   - 갱신된 `nextStartPage`를 보여 준다.
 - 예외:
-  - 끝 페이지가 시작 페이지보다 작으면 저장하지 않고 필드 오류를 표시한다.
+  - 끝난 페이지가 시작 위치보다 작으면 저장하지 않고 필드 오류를 표시한다.
   - 감상이 비어 있어도 저장한다.
   - 저장 실패 시 draft를 유지하고 재시도할 수 있다.
 

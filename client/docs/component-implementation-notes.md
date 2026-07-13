@@ -74,8 +74,8 @@ bookDraft
 - initialPage
 
 recordDraft
-- startPage
 - endPage
+- startPageOverride: nullable
 - impression
 - keywords: string[] — P2 이후
 ```
@@ -392,9 +392,9 @@ isEmptyBookshelf
 #### 주요 props/state
 
 - `bookId`
-- `suggestedStartPage`
-- `recordDraft.startPage`
+- `nextStartPage`
 - `recordDraft.endPage`
+- `recordDraft.startPageOverride`
 - `recordDraft.impression`
 - `recordDraft.keywords` — P2 이후
 - `validationErrors`
@@ -404,11 +404,17 @@ isEmptyBookshelf
 
 #### 검증 정책
 
-- 시작/끝 페이지는 1 이상의 정수다.
-- 끝 페이지는 시작 페이지보다 작을 수 없다.
+- 끝난 페이지는 1 이상의 정수다.
+- 끝난 페이지는 자동 시작 위치 또는 사용자가 바꾼 시작 위치보다 작을 수 없다.
 - 감상은 선택이다.
 - P2에서 생각 키워드는 선택이며 최대 3개다.
 - 감상 없이 저장해도 성공한다.
+
+#### 시작 위치 예외 처리
+
+- 기본 시작 위치는 `nextStartPage`이며 입력 필드로 노출하지 않는다.
+- 다시 읽기나 건너뛰기가 필요할 때만 `시작 위치 직접 바꾸기`를 열어 `startPageOverride`를 입력한다.
+- 끝난 페이지 입력 뒤에는 계산된 `startPage–endPage` 범위를 미리 보여 준다.
 
 #### 성공과 실패 처리
 
