@@ -152,18 +152,49 @@ function OnboardingPage({ onComplete }) {
   );
 }
 
-function AddBookDialog({ open, onOpenChange }) {
+function AddBookDialog({ open, onOpenChange, onCreateBook }) {
   const titleId = useId();
   const authorId = useId();
   const initialPageId = useId();
   const [draft, setDraft] = useState({ title: '', author: '', initialPage: '1' });
+  const [errors, setErrors] = useState({});
 
   function handleOpenChange(nextOpen) {
     onOpenChange(nextOpen);
 
     if (!nextOpen) {
       setDraft({ title: '', author: '', initialPage: '1' });
+      setErrors({});
     }
+  }
+
+  function handleSubmit(event) {
+    event.preventDefault();
+
+    const title = draft.title.trim();
+    const initialPage = Number(draft.initialPage);
+    const nextErrors = {};
+
+    if (!title) {
+      nextErrors.title = '책 제목을 입력해 주세요.';
+    }
+
+    if (!Number.isInteger(initialPage) || initialPage < 1) {
+      nextErrors.initialPage = '1 이상의 페이지를 입력해 주세요.';
+    }
+
+    if (Object.keys(nextErrors).length) {
+      setErrors(nextErrors);
+      return;
+    }
+
+    onCreateBook({
+      id: `mock-book-${Date.now()}`,
+      title,
+      author: draft.author.trim(),
+      initialPage,
+    });
+    handleOpenChange(false);
   }
 
   return (
@@ -177,18 +208,28 @@ function AddBookDialog({ open, onOpenChange }) {
           </DialogDescription>
         </DialogHeader>
 
-        <form className="add-book-dialog__form">
+        <form className="add-book-dialog__form" onSubmit={handleSubmit} noValidate>
           <div className="field-group">
             <Label htmlFor={titleId}>책 제목</Label>
             <Input
               id={titleId}
               name="title"
               value={draft.title}
-              onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))}
+              onChange={(event) => {
+                setDraft((current) => ({ ...current, title: event.target.value }));
+                if (errors.title && event.target.value.trim()) {
+                  setErrors((current) => ({ ...current, title: undefined }));
+                }
+              }}
               placeholder="예: 아주 작은 습관의 힘"
               autoFocus
               required
+              aria-invalid={Boolean(errors.title)}
+              onBlur={() => {
+                if (!draft.title.trim()) setErrors((current) => ({ ...current, title: '책 제목을 입력해 주세요.' }));
+              }}
             />
+            {errors.title && <p className="field-error" role="alert">{errors.title}</p>}
           </div>
           <div className="field-group">
             <Label htmlFor={authorId}>저자 <span>선택</span></Label>
@@ -209,16 +250,26 @@ function AddBookDialog({ open, onOpenChange }) {
               min="1"
               inputMode="numeric"
               value={draft.initialPage}
-              onChange={(event) => setDraft((current) => ({ ...current, initialPage: event.target.value }))}
+              onChange={(event) => {
+                setDraft((current) => ({ ...current, initialPage: event.target.value }));
+                if (errors.initialPage && Number.isInteger(Number(event.target.value)) && Number(event.target.value) >= 1) {
+                  setErrors((current) => ({ ...current, initialPage: undefined }));
+                }
+              }}
+              aria-invalid={Boolean(errors.initialPage)}
             />
-            <p className="field-help">처음부터 읽는다면 1쪽 그대로 두면 돼요.</p>
+            {errors.initialPage ? (
+              <p className="field-error" role="alert">{errors.initialPage}</p>
+            ) : (
+              <p className="field-help">처음부터 읽는다면 1쪽 그대로 두면 돼요.</p>
+            )}
           </div>
 
           <div className="add-book-dialog__actions">
             <DialogClose render={<Button type="button" variant="outline" />}>
               취소
             </DialogClose>
-            <Button type="button" disabled>
+            <Button type="submit">
               책장에 꽂기
             </Button>
           </div>
@@ -259,9 +310,53 @@ function EmptyBookshelf({ user, onAddBook }) {
   );
 }
 
+function ReadingBookshelf({ user, books, onAddBook }) {
+  return (
+    <main className="bookshelf-preview">
+      <header className="bookshelf-preview__header">
+        <a href="/bookshelf" aria-label="잇장 홈">
+          <BookOpen aria-hidden="true" size={19} strokeWidth={1.8} />
+          <span>잇장</span>
+        </a>
+        <span>{user.nickname}의 잇장</span>
+      </header>
+
+      <section className="reading-bookshelf" aria-labelledby="reading-shelf-title">
+        <div className="reading-bookshelf__heading">
+          <div>
+            <p className="section-kicker">NOW READING</p>
+            <h1 id="reading-shelf-title">읽고 있는 책</h1>
+            <p>{books.length}권의 책이 다음 장을 기다리고 있어요.</p>
+          </div>
+          <Button className="reading-bookshelf__add" type="button" onClick={onAddBook}>
+            <Plus aria-hidden="true" size={17} strokeWidth={1.8} />
+            책 추가
+          </Button>
+        </div>
+
+        <div className="reading-shelf" aria-label="읽는 중인 책 선반">
+          <ul className="reading-shelf__books">
+            {books.map((book) => (
+              <li key={book.id}>
+                <article className="book-spine">
+                  <p className="book-spine__title">{book.title}</p>
+                  {book.author && <p className="book-spine__author">{book.author}</p>}
+                  <span className="book-spine__bookmark">{book.initialPage}쪽부터</span>
+                </article>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <p className="reading-shelf__note">책을 누르면 다음에는 지난 갈피부터 이어 읽을 수 있어요.</p>
+      </section>
+    </main>
+  );
+}
+
 export default function App() {
   const [user, setUser] = useState(() => readStoredUser());
   const [isAddBookOpen, setIsAddBookOpen] = useState(false);
+  const [books, setBooks] = useState([]);
 
   useEffect(() => {
     if (user && window.location.pathname === '/') {
@@ -275,14 +370,26 @@ export default function App() {
     setUser(newUser);
   }
 
+  function handleCreateBook(newBook) {
+    setBooks((currentBooks) => [newBook, ...currentBooks]);
+  }
+
   if (!user) {
     return <OnboardingPage onComplete={handleOnboardingComplete} />;
   }
 
   return (
     <>
-      <EmptyBookshelf user={user} onAddBook={() => setIsAddBookOpen(true)} />
-      <AddBookDialog open={isAddBookOpen} onOpenChange={setIsAddBookOpen} />
+      {books.length ? (
+        <ReadingBookshelf user={user} books={books} onAddBook={() => setIsAddBookOpen(true)} />
+      ) : (
+        <EmptyBookshelf user={user} onAddBook={() => setIsAddBookOpen(true)} />
+      )}
+      <AddBookDialog
+        open={isAddBookOpen}
+        onOpenChange={setIsAddBookOpen}
+        onCreateBook={handleCreateBook}
+      />
     </>
   );
 }
