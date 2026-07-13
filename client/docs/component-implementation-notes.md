@@ -14,6 +14,7 @@ AppShell
 ├─ OnboardingScreen
 ├─ BookshelfScreen
 │  ├─ ContinueReadingCard
+│  ├─ ReadingActivityCalendar (P1)
 │  ├─ ShelfSection
 │  │  ├─ BookSpine
 │  │  └─ EmptyShelf
@@ -30,7 +31,7 @@ AppShell
 └─ Toast and Dialog Layer
 ```
 
-P1 이후에는 `TimerPanel`, `CompletionReviewDialog`, `CompletionReviewForm`, `FinalReviewPage`, `ReadingFootprint`를 같은 구조에 추가한다. 친구 서재와 책장 커스터마이징은 P0 컴포넌트에 조건을 누적하지 않고 별도 화면과 모델로 설계한다.
+P1 이후에는 `TimerPanel`, `CompletionReviewDialog`, `CompletionReviewForm`, `FinalReviewPage`, `ReadingActivityCalendar`를 같은 구조에 추가한다. P2에서는 `KeywordInput`, `KeywordChip`, `ThoughtCollectionScreen`, `ReadingFootprint`를 추가한다. 친구 서재와 책장 커스터마이징은 P0 컴포넌트에 조건을 누적하지 않고 별도 화면과 모델로 설계한다.
 
 ## 상태 분류
 
@@ -76,6 +77,7 @@ recordDraft
 - startPage
 - endPage
 - impression
+- keywords: string[] — P2 이후
 ```
 
 ### 파생 상태
@@ -170,9 +172,10 @@ isEmptyBookshelf
 #### 표시 우선순위
 
 1. `ContinueReadingCard`
-2. `ShelfSection`의 읽는 중 책
-3. `AddBookDialog`
-4. P1 이후 완독 선반
+2. P1 이후 `ReadingActivityCalendar`
+3. `ShelfSection`의 읽는 중 책
+4. `AddBookDialog`
+5. P1 이후 완독 선반
 
 #### 사용자 안내 책임
 
@@ -393,6 +396,7 @@ isEmptyBookshelf
 - `recordDraft.startPage`
 - `recordDraft.endPage`
 - `recordDraft.impression`
+- `recordDraft.keywords` — P2 이후
 - `validationErrors`
 - `isSubmitting`
 - `onSave`
@@ -403,6 +407,7 @@ isEmptyBookshelf
 - 시작/끝 페이지는 1 이상의 정수다.
 - 끝 페이지는 시작 페이지보다 작을 수 없다.
 - 감상은 선택이다.
+- P2에서 생각 키워드는 선택이며 최대 3개다.
 - 감상 없이 저장해도 성공한다.
 
 #### 성공과 실패 처리
@@ -423,6 +428,13 @@ isEmptyBookshelf
 
 ## P1 이후 컴포넌트
 
+### ReadingActivityCalendar
+
+- 최근 12주의 기록 날짜를 GitHub 잔디형 격자로 보여 준다.
+- `reading_records.createdAt`을 날짜별로 묶어 기록 수를 계산한다.
+- 빈 날짜는 실패나 결석으로 표시하지 않으며, 기록 수는 색 농도로만 구분한다.
+- 날짜를 가리키면 날짜와 기록 수를 tooltip 또는 접근 가능한 설명으로 제공한다.
+
 ### TimerPanel
 
 - 타이머는 `StartReadingPanel`의 보조 기능이다.
@@ -434,6 +446,20 @@ isEmptyBookshelf
 - `완독으로 옮기기`에서 책 상태를 `COMPLETED`로 바꾸고 선택적 긴 서평을 저장한다.
 - 긴 서평을 쓰지 않아도 완독 처리는 가능하다.
 - `FinalReviewPage`는 긴 서평과 시간순 세션 감상 모아보기를 함께 보여 준다.
+
+## P2 생각 키워드 컴포넌트
+
+### KeywordInput / KeywordChip
+
+- `KeywordInput`은 세션 기록에 최대 3개의 선택 키워드를 추가한다.
+- 해시 기호를 강제하지 않고, 앞뒤 공백과 중복을 정리한다.
+- `KeywordChip`은 책 상세의 기록 페이지와 생각 모아보기 결과에서 같은 표현으로 사용한다.
+
+### ThoughtCollectionScreen
+
+- 사용자가 특정 키워드와 연결된 자기 기록을 책과 무관하게 모아 보는 화면이다.
+- 결과에는 키워드, 책 제목, 페이지 범위, 날짜, 짧은 감상을 표시한다.
+- P2의 API client는 키워드 검색 결과를 별도 서버 상태로 관리한다.
 
 ## API Client 경계
 
