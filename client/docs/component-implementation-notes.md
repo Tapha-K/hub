@@ -31,7 +31,7 @@ AppShell
 └─ Toast and Dialog Layer
 ```
 
-P1 이후에는 `TimerPanel`, `CompletionReviewDialog`, `CompletionReviewForm`, `FinalReviewPage`, `ReadingActivityCalendar`를 같은 구조에 추가한다. P2에서는 `KeywordInput`, `KeywordChip`, `ThoughtCollectionScreen`, `ReadingFootprint`를 추가한다. 친구 서재와 책장 커스터마이징은 P0 컴포넌트에 조건을 누적하지 않고 별도 화면과 모델로 설계한다.
+P1 이후에는 `TimerPanel`, `CompletionReviewDialog`, `CompletionReviewForm`, `FinalReviewPage`, `ReadingActivityCalendar`, `ArchiveBookDialog`, `LatestRecordActions`를 같은 구조에 추가한다. P2에서는 `KeywordInput`, `KeywordChip`, `ThoughtCollectionScreen`, `ReadingFootprint`를 추가한다. 친구 서재와 책장 커스터마이징은 P0 컴포넌트에 조건을 누적하지 않고 별도 화면과 모델로 설계한다.
 
 ## 상태 분류
 
@@ -176,6 +176,7 @@ isEmptyBookshelf
 3. `ShelfSection`의 읽는 중 책
 4. `AddBookDialog`
 5. P1 이후 완독 선반
+6. P1 이후 보관함
 
 #### 사용자 안내 책임
 
@@ -212,7 +213,7 @@ isEmptyBookshelf
 #### 책임
 
 - 같은 상태의 책을 최근 기록 순서로 묶어 보여 준다.
-- P0에서는 `READING`만 다루고, P1에서 `COMPLETED`를 추가한다.
+- P0에서는 `READING`만 다루고, P1에서 `COMPLETED`, `ARCHIVED`를 추가한다.
 
 #### 주요 props
 
@@ -382,6 +383,7 @@ isEmptyBookshelf
 
 - 감상이 비어 있으면 감상 영역을 만들지 않는다.
 - 목록은 오래된 기록부터 보여 준다.
+- P1에서만 가장 최근 기록에 `LatestRecordActions`를 연결한다. 이전 기록은 읽기 전용이다.
 
 ### SessionRecordDialog / SessionRecordForm
 
@@ -453,6 +455,19 @@ isEmptyBookshelf
 - 긴 서평을 쓰지 않아도 완독 처리는 가능하다.
 - `FinalReviewPage`는 긴 서평과 시간순 세션 감상 모아보기를 함께 보여 준다.
 
+### ArchiveBookDialog
+
+- `잠시 보관하기`가 실패나 삭제가 아니라는 점을 설명하고 책 상태를 `ARCHIVED`로 바꾼다.
+- 보관함에서는 `다시 읽는 중으로 옮기기`를 제공하며, 기록과 마지막 책갈피를 유지한다.
+- 보관 확인과 다시 읽는 중 복귀 모두 성공한 서버 응답 뒤에만 선반을 갱신한다.
+
+### LatestRecordActions
+
+- 가장 최근 기록에만 수정·삭제 행동을 제공한다.
+- 수정 또는 삭제가 성공하면 책 상세과 책장 목록을 다시 조회해 마지막 책갈피와 `nextStartPage`를 갱신한다.
+- 이전 기록에는 이 행동을 노출하지 않는다.
+- 수정 dialog는 기존 끝난 페이지와 감상을 채운다. 삭제는 다음 시작 페이지 재계산을 알리는 확인 dialog를 거친다.
+
 ## P2 생각 키워드 컴포넌트
 
 ### KeywordInput / KeywordChip
@@ -482,3 +497,13 @@ createReadingRecord(bookId, input)
 - `BookshelfScreen`은 `getBooks` 결과를 읽고 `createBook` 성공 뒤 목록을 갱신한다.
 - `BookDetailScreen`은 `getBook` 결과를 읽고 `createReadingRecord` 성공 뒤 상세를 갱신한다.
 - 서버 오류 형식과 loading/retry 처리는 API client와 화면의 경계에서 일관되게 처리한다.
+
+P1에서는 다음 경계를 추가한다.
+
+```text
+updateBookStatus(bookId, status)
+updateLatestReadingRecord(bookId, recordId, input)
+deleteLatestReadingRecord(bookId, recordId)
+```
+
+- 기록 수정·삭제의 권한 여부와 갱신된 `nextStartPage` 계산은 서버가 판단한다.
