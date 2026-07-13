@@ -368,6 +368,90 @@ input:focus-visible {
   background: repeating-linear-gradient(90deg, #8b5a41 0 5rem, #98664a 5rem 9rem, #85523b 9rem 13rem);
 }
 
+.add-book-dialog {
+  width: min(calc(100% - 2rem), 31rem);
+  max-width: none;
+  gap: 0;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: var(--paper);
+  padding: 0;
+  box-shadow: 0 1.5rem 4rem rgb(58 45 35 / 18%);
+}
+
+.add-book-dialog__header {
+  gap: 0;
+  border-bottom: 1px solid var(--line);
+  padding: 2.1rem 2rem 1.55rem;
+}
+
+.add-book-dialog__header .section-kicker {
+  margin-bottom: 0.85rem;
+}
+
+.add-book-dialog__header [data-slot='dialog-title'] {
+  font-family: Georgia, "Noto Serif KR", serif;
+  font-size: 1.65rem;
+  font-weight: 600;
+  letter-spacing: -0.06em;
+  line-height: 1.25;
+}
+
+.add-book-dialog__header [data-slot='dialog-description'] {
+  margin-top: 0.8rem;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.65;
+}
+
+.add-book-dialog__form {
+  display: grid;
+  gap: 1.3rem;
+  padding: 1.7rem 2rem 2rem;
+}
+
+.add-book-dialog .field-group {
+  gap: 0.5rem;
+}
+
+.add-book-dialog .field-group label span {
+  margin-left: 0.25rem;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.add-book-dialog .field-group input {
+  height: 2.9rem;
+  background: #fffefa;
+  font-size: 0.95rem;
+}
+
+.field-group--page {
+  grid-template-columns: 7.5rem minmax(0, 1fr);
+  align-items: center;
+}
+
+.field-group--page .field-help {
+  grid-column: 1 / -1;
+}
+
+.add-book-dialog__actions {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+  gap: 0.6rem;
+  margin-top: 0.2rem;
+}
+
+.add-book-dialog__actions button {
+  height: 2.9rem;
+  border-radius: 0;
+}
+
+.add-book-dialog__actions button:disabled {
+  cursor: not-allowed;
+}
+
 @media (max-width: 760px) {
   .onboarding-page {
     display: flex;
@@ -452,6 +536,12 @@ input:focus-visible {
 
   .empty-bookshelf {
     margin-top: 20vh;
+  }
+
+  .add-book-dialog__header,
+  .add-book-dialog__form {
+    padding-right: 1.3rem;
+    padding-left: 1.3rem;
   }
 }
 

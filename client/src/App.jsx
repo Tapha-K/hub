@@ -2,6 +2,14 @@ import { useEffect, useId, useState } from 'react';
 import { ArrowRight, Bookmark, BookOpen, NotebookPen, Plus } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
@@ -144,7 +152,83 @@ function OnboardingPage({ onComplete }) {
   );
 }
 
-function EmptyBookshelf({ user }) {
+function AddBookDialog({ open, onOpenChange }) {
+  const titleId = useId();
+  const authorId = useId();
+  const initialPageId = useId();
+  const [draft, setDraft] = useState({ title: '', author: '', initialPage: '1' });
+
+  function handleOpenChange(nextOpen) {
+    onOpenChange(nextOpen);
+
+    if (!nextOpen) {
+      setDraft({ title: '', author: '', initialPage: '1' });
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="add-book-dialog" showCloseButton={false}>
+        <DialogHeader className="add-book-dialog__header">
+          <p className="section-kicker">ADD A BOOK</p>
+          <DialogTitle>읽고 있는 책을 꽂아볼까요?</DialogTitle>
+          <DialogDescription>
+            먼저 책과 시작한 페이지를 적어 주세요. 마지막 갈피는 읽은 뒤에 남길 수 있어요.
+          </DialogDescription>
+        </DialogHeader>
+
+        <form className="add-book-dialog__form">
+          <div className="field-group">
+            <Label htmlFor={titleId}>책 제목</Label>
+            <Input
+              id={titleId}
+              name="title"
+              value={draft.title}
+              onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))}
+              placeholder="예: 아주 작은 습관의 힘"
+              autoFocus
+              required
+            />
+          </div>
+          <div className="field-group">
+            <Label htmlFor={authorId}>저자 <span>선택</span></Label>
+            <Input
+              id={authorId}
+              name="author"
+              value={draft.author}
+              onChange={(event) => setDraft((current) => ({ ...current, author: event.target.value }))}
+              placeholder="예: 제임스 클리어"
+            />
+          </div>
+          <div className="field-group field-group--page">
+            <Label htmlFor={initialPageId}>시작 페이지</Label>
+            <Input
+              id={initialPageId}
+              name="initialPage"
+              type="number"
+              min="1"
+              inputMode="numeric"
+              value={draft.initialPage}
+              onChange={(event) => setDraft((current) => ({ ...current, initialPage: event.target.value }))}
+            />
+            <p className="field-help">처음부터 읽는다면 1쪽 그대로 두면 돼요.</p>
+          </div>
+
+          <div className="add-book-dialog__actions">
+            <DialogClose render={<Button type="button" variant="outline" />}>
+              취소
+            </DialogClose>
+            <Button type="button" disabled>
+              책장에 꽂기
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function EmptyBookshelf({ user, onAddBook }) {
   return (
     <main className="bookshelf-preview">
       <header className="bookshelf-preview__header">
@@ -162,7 +246,7 @@ function EmptyBookshelf({ user }) {
           지금 읽고 있는 책을 등록하면, 다음부터 마지막 책갈피에서 바로 이어 읽을 수
           있어요.
         </p>
-        <Button className="empty-bookshelf__cta" size="lg" type="button">
+        <Button className="empty-bookshelf__cta" size="lg" type="button" onClick={onAddBook}>
           <Plus aria-hidden="true" size={18} strokeWidth={1.8} />
           읽고 있는 책 추가
         </Button>
@@ -177,6 +261,7 @@ function EmptyBookshelf({ user }) {
 
 export default function App() {
   const [user, setUser] = useState(() => readStoredUser());
+  const [isAddBookOpen, setIsAddBookOpen] = useState(false);
 
   useEffect(() => {
     if (user && window.location.pathname === '/') {
@@ -190,5 +275,14 @@ export default function App() {
     setUser(newUser);
   }
 
-  return user ? <EmptyBookshelf user={user} /> : <OnboardingPage onComplete={handleOnboardingComplete} />;
+  if (!user) {
+    return <OnboardingPage onComplete={handleOnboardingComplete} />;
+  }
+
+  return (
+    <>
+      <EmptyBookshelf user={user} onAddBook={() => setIsAddBookOpen(true)} />
+      <AddBookDialog open={isAddBookOpen} onOpenChange={setIsAddBookOpen} />
+    </>
+  );
 }
