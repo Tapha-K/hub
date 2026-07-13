@@ -21,7 +21,7 @@ AppShell
 │  └─ AddBookDialog
 │     └─ AddBookForm
 ├─ BookDetailScreen
-│  ├─ BookCover
+│  ├─ BookVisual
 │  ├─ BookmarkSummary
 │  ├─ StartReadingPanel
 │  ├─ SessionRecordPage
@@ -57,9 +57,11 @@ bookDetail
 
 ```text
 route: onboarding | bookshelf | bookDetail
+pathname: / | /bookshelf | /books/{bookId}
 selectedBookId
 isAddBookOpen
 isRecordDialogOpen
+isReadingContextActive
 isSubmitting
 loadError
 toast
@@ -89,7 +91,7 @@ hasRecords
 isEmptyBookshelf
 ```
 
-`nextStartPage`는 제안값이다. 사용자가 새 기록 폼에서 수정할 수 있으며, 이전 기록과 연속되는지 강제하지 않는다.
+`nextStartPage`는 `createdAt DESC, id DESC` 기준의 최신 기록에서 계산하는 제안값이다. 사용자는 다시 읽기·건너뛰기 예외에서만 새 기록 폼의 `startPageOverride`로 수정할 수 있으며, 이전 기록과 연속되는지 강제하지 않는다.
 
 ## 공통 컴포넌트
 
@@ -103,7 +105,7 @@ isEmptyBookshelf
 
 #### 주요 상태와 핸들러
 
-- `user`, `route`, `selectedBookId`, `toast`
+- `user`, `route`, `pathname`, `selectedBookId`, `isReadingContextActive`, `toast`
 - `onCompleteOnboarding`
 - `onOpenBook`
 - `onBackToBookshelf`
@@ -113,6 +115,12 @@ isEmptyBookshelf
 
 - 사용자가 현재 책장에서 보고 있는지, 책 안에서 기록을 보고 있는지 맥락을 잃지 않게 한다.
 - 서버 오류를 집중 실패나 기록 실패로 표현하지 않는다.
+- 화면 전환 뒤 새 화면의 `h1`에 포커스를 주고, 책장으로 돌아갈 때는 출발한 책등 또는 재개 CTA에 포커스를 돌린다.
+
+#### P0 사용자 복구
+
+- 첫 온보딩은 닉네임을 표시명으로 사용해 새 사용자를 만든다.
+- 같은 브라우저에 보관한 `user.id`가 있을 때만 같은 책장을 복구한다. 닉네임으로 기존 사용자를 조회하지 않는다.
 
 ### AppHeader
 
@@ -151,7 +159,7 @@ isEmptyBookshelf
 #### 표시 조건
 
 - 공백 닉네임은 제출할 수 없다.
-- 생성 또는 조회 요청 중에는 중복 제출을 막는다.
+- 사용자 생성 요청 중에는 중복 제출을 막는다.
 
 ### BookshelfScreen
 
@@ -187,7 +195,7 @@ isEmptyBookshelf
 
 #### 책임
 
-- 가장 최근 기록이 있는 읽는 중 책을 한 번의 행동으로 다시 열게 한다.
+- 가장 최근 기록이 있는 읽는 중 책에서 읽기 준비 상태를 한 번의 행동으로 시작하게 한다.
 
 #### 주요 props
 
@@ -203,10 +211,16 @@ isEmptyBookshelf
 - 최근 감상이 있으면 한 줄
 - CTA: `{nextStartPage}쪽부터 이어 읽기`
 
+#### 상호작용 규칙
+
+- 카드 표면은 정보를 묶는 컨테이너이며, 내부의 재개 CTA만 클릭 가능하게 한다.
+- `onContinue`는 `/books/{bookId}`로 이동하고 `isReadingContextActive = true`를 만든다.
+
 #### 표시 조건
 
-- 기록이 있는 `READING` 책이 없으면 표시하지 않는다.
-- 기록 없는 새 책은 `처음 읽기` CTA를 가진 책등으로만 표시한다.
+- 기록이 있는 `READING` 책이 있으면 가장 최근 기록의 책을 표시한다.
+- 기록이 있는 책이 없고 `READING` 책이 있으면, 가장 최근에 추가한 새 책을 `처음 읽기` CTA로 표시한다.
+- `READING` 책이 없을 때만 이 영역을 숨기고 `EmptyShelf`의 CTA를 우선한다.
 
 ### ShelfSection
 
@@ -226,23 +240,26 @@ isEmptyBookshelf
 
 #### 책임
 
-- 책장 목록에서 한 권을 인식하고 책 상세로 이동시키는 카드다.
-- 물리적인 책 모양을 흉내 내기보다, 제목과 재개 상태가 읽히는 것을 우선한다.
+- 책장 목록에서 한 권을 인식하고 책 상세로 이동시키는 상호작용 가능한 책등이다.
+- 좁은 책등의 정보 밀도를 낮추고, 제목과 다음 시작 위치만 보여 준다.
 
 #### 주요 props
 
 - `book`
 - `nextStartPage`
-- `lastReadAt`
-- `recordCount`
 - `onOpen`
 
 #### 표시 정보
 
 - 책 제목
-- `읽는 중` 상태
 - 다음 시작 페이지 또는 `첫 읽기`
-- 마지막 기록 날짜
+
+#### 구현 기준
+
+- 색상과 폭은 `book.id`에서 결정해 새로고침 뒤에도 같은 책을 시각적으로 인식하게 한다.
+- `/books/{bookId}`로 가는 링크로 구현하며, 제목·선택적 저자·등록일·다음 시작 페이지를 접근 가능한 이름으로 제공한다.
+- 제목과 저자가 모두 같은 책은 상세의 보조 정보에서 등록일을 보여 구별한다.
+- 날짜·감상·기록 수는 좁은 책등에 넣지 않고 `ContinueReadingCard`와 상세 화면에서 보여 준다.
 
 ### EmptyShelf
 
@@ -304,12 +321,14 @@ isEmptyBookshelf
 - `nextStartPage`
 - `isLoading`
 - `isRecordDialogOpen`
+- `isReadingContextActive`
 - `onOpenRecordDialog`
+- `onStartReading`
 - `onBackToBookshelf`
 
 #### 표시 우선순위
 
-1. `BookCover`와 제목
+1. `BookVisual`과 제목
 2. `BookmarkSummary`
 3. `StartReadingPanel`
 4. `SessionRecordPage` 목록
@@ -320,12 +339,12 @@ isEmptyBookshelf
 - 세션 기록을 시간순으로 쌓아 독서 노트처럼 보이게 한다.
 - 기록을 모두 읽게 하기 전에 최근 책갈피와 이어 읽기 CTA를 먼저 보여 준다.
 
-### BookCover
+### BookVisual
 
 #### 책임
 
 - 책 상세의 제목, 선택적 저자, 상태를 보여 준다.
-- P0에서는 외부 표지 이미지·디자인 해금과 결합하지 않는다.
+- P0에서는 외부 표지 이미지·디자인 해금과 결합하지 않고, `BookSpine`의 큰 변형 또는 단순한 텍스트 책 식별자로 구현한다.
 
 ### BookmarkSummary
 
@@ -355,6 +374,8 @@ isEmptyBookshelf
 
 - `nextStartPage`
 - `onOpenRecordDialog`
+- `isReadingContextActive`
+- `onStartReading`
 - `timerAvailable` — P1 이후
 
 #### CTA 정책
@@ -362,6 +383,7 @@ isEmptyBookshelf
 - 주 CTA: `{nextStartPage}쪽부터 이어 읽기`
 - 읽은 뒤 CTA: `이번 읽기 기록 남기기`
 - 타이머는 P1에서만 `집중 시간 정하기(선택)`으로 추가한다.
+- 주 CTA를 누르면 `isReadingContextActive`를 시작하고 `다 읽고 돌아오면 기록을 남겨 주세요.` 안내와 기록 CTA를 보여 준다. 일반 책등 클릭은 이 상태를 만들지 않는다.
 
 ### SessionRecordPage
 
@@ -417,11 +439,13 @@ isEmptyBookshelf
 - 기본 시작 위치는 `nextStartPage`이며 입력 필드로 노출하지 않는다.
 - 다시 읽기나 건너뛰기가 필요할 때만 `시작 위치 직접 바꾸기`를 열어 `startPageOverride`를 입력한다.
 - 끝난 페이지 입력 뒤에는 계산된 `startPage–endPage` 범위를 미리 보여 준다.
+- 범위와 `endPage - startPage + 1`로 계산한 페이지 수는 `role="status"`로 알린다.
 
 #### 성공과 실패 처리
 
 - `POST /api/books/{bookId}/records`가 성공하면 dialog를 닫고, 서버 응답 기준의 새 기록과 `nextStartPage`를 책 상세에 반영한다.
 - 실패하면 입력값을 유지하며 오류와 재시도 CTA를 보여 준다.
+- 응답이 불확실하게 끊기면 같은 저장을 자동 재시도하지 않고 `getBook`으로 먼저 서버 기록을 확인한다.
 
 ### FinalReviewPreview
 
