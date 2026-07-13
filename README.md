@@ -37,6 +37,7 @@
 
 ## 계획 문서
 
+- 이번 주 실행 작업은 [Week 2 Issue Board](https://github.com/Tapha-K/hub/issues)에서 관리합니다.
 - 상위 로드맵과 단계별 우선순위는 [프로젝트 Wiki](https://github.com/Tapha-K/hub/wiki)에서 관리합니다.
 - 남은 3주 MVP 실행 계획은 [Sprint Backlog](https://github.com/Tapha-K/hub/wiki/Sprint-Backlog)의 Week 2~4 작업을 기준으로 합니다.
 - 장기 제품 백로그는 [Product Backlog](https://github.com/Tapha-K/hub/wiki/Product-Backlog)에서 관리합니다.
