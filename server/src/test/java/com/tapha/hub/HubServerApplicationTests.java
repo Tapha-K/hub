@@ -130,4 +130,34 @@ class HubServerApplicationTests {
                 .andExpect(jsonPath("$.code").value("NOT_FOUND"));
     }
 
+    @Test
+    void savesReadingRecordAndAdvancesBookmark() throws Exception {
+        Long userId = userRepository.save(new User("다정", Instant.now())).getId();
+        Long bookId = bookRepository.save(new Book(userId, "독서 기록", null, 20, Instant.now())).getId();
+
+        mockMvc.perform(post("/api/books/{bookId}/records", bookId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "userId": %d, "endPage": 32, "impression": "인상적인 문장이 있었어요." }
+                                """.formatted(userId)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.record.startPage").value(20))
+                .andExpect(jsonPath("$.record.endPage").value(32))
+                .andExpect(jsonPath("$.nextStartPage").value(33));
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .get("/api/books/{bookId}", bookId).param("userId", String.valueOf(userId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nextStartPage").value(33))
+                .andExpect(jsonPath("$.readingRecords.length()").value(1));
+
+        mockMvc.perform(post("/api/books/{bookId}/records", bookId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "userId": %d, "endPage": 30 }
+                                """.formatted(userId)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_PAGE_RANGE"));
+    }
+
 }

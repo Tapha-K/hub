@@ -19,15 +19,20 @@ public record BookDetailResponse(
         Instant createdAt
 ) {
     public static BookDetailResponse from(Book book) {
+        return from(book, List.of());
+    }
+
+    public static BookDetailResponse from(Book book, List<ReadingRecordSummary> records) {
+        ReadingRecordSummary latestRecord = records.isEmpty() ? null : records.getLast();
         return new BookDetailResponse(
                 book.getId(),
                 book.getTitle(),
                 book.getAuthor(),
                 book.getInitialPage(),
                 book.getStatus(),
-                book.getInitialPage(),
-                null,
-                List.of(),
+                latestRecord == null ? book.getInitialPage() : latestRecord.endPage() + 1,
+                latestRecord,
+                records,
                 book.getCreatedAt()
         );
     }

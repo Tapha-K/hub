@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.tapha.hub.common.application.ResourceNotFoundException;
+import com.tapha.hub.common.application.InvalidRequestException;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
@@ -25,5 +26,10 @@ public class ApiExceptionHandler {
     public ResponseEntity<ApiError> handleNotFound(ResourceNotFoundException exception) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new ApiError("NOT_FOUND", exception.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidRequestException.class)
+    public ResponseEntity<ApiError> handleInvalidRequest(InvalidRequestException exception) {
+        return ResponseEntity.badRequest().body(new ApiError("INVALID_PAGE_RANGE", exception.getMessage()));
     }
 }

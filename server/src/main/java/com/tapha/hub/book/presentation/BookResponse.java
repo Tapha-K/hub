@@ -18,15 +18,19 @@ public record BookResponse(
         Instant createdAt
 ) {
     public static BookResponse from(Book book) {
+        return from(book, 0, null);
+    }
+
+    public static BookResponse from(Book book, long recordCount, ReadingRecordSummary latestRecord) {
         return new BookResponse(
                 book.getId(),
                 book.getTitle(),
                 book.getAuthor(),
                 book.getInitialPage(),
                 book.getStatus(),
-                0,
-                book.getInitialPage(),
-                null,
+                Math.toIntExact(recordCount),
+                latestRecord == null ? book.getInitialPage() : latestRecord.endPage() + 1,
+                latestRecord,
                 book.getCreatedAt()
         );
     }

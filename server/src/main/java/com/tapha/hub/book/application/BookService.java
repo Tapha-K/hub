@@ -14,6 +14,8 @@ import com.tapha.hub.book.presentation.BookDetailResponse;
 import com.tapha.hub.book.presentation.BookshelfResponse;
 import com.tapha.hub.book.presentation.CreateBookRequest;
 import com.tapha.hub.common.application.ResourceNotFoundException;
+import com.tapha.hub.reading.domain.ReadingRecordRepository;
+import com.tapha.hub.reading.presentation.ReadingRecordSummary;
 import com.tapha.hub.user.domain.UserRepository;
 
 @Service
@@ -21,10 +23,12 @@ public class BookService {
 
     private final BookRepository bookRepository;
     private final UserRepository userRepository;
+    private final ReadingRecordRepository readingRecordRepository;
 
-    public BookService(BookRepository bookRepository, UserRepository userRepository) {
+    public BookService(BookRepository bookRepository, UserRepository userRepository, ReadingRecordRepository readingRecordRepository) {
         this.bookRepository = bookRepository;
         this.userRepository = userRepository;
+        this.readingRecordRepository = readingRecordRepository;
     }
 
     @Transactional
@@ -53,7 +57,10 @@ public class BookService {
         List<BookResponse> books = bookRepository
                 .findByUserIdAndStatusOrderByCreatedAtDescIdDesc(userId, status)
                 .stream()
-                .map(BookResponse::from)
+                .map(book -> BookResponse.from(book,
+                        readingRecordRepository.countByBookId(book.getId()),
+                        readingRecordRepository.findTopByBookIdOrderByCreatedAtDescIdDesc(book.getId())
+                                .map(ReadingRecordSummary::from).orElse(null)))
                 .toList();
 
         return new BookshelfResponse(books);
@@ -64,7 +71,9 @@ public class BookService {
         Book book = bookRepository.findByIdAndUserId(bookId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("책을 찾을 수 없어요."));
 
-        return BookDetailResponse.from(book);
+        List<ReadingRecordSummary> records = readingRecordRepository.findByBookIdOrderByCreatedAtAscIdAsc(bookId)
+                .stream().map(ReadingRecordSummary::from).toList();
+        return BookDetailResponse.from(book, records);
     }
 
     private String normalizeAuthor(String author) {
