@@ -20,7 +20,7 @@ import {
   getNextStartPage,
   getRecords,
 } from '@/lib/reading';
-import { createUser } from '@/lib/api';
+import { createBook, createUser, getBooks } from '@/lib/api';
 
 const USER_STORAGE_KEY = 'itjang:user';
 
@@ -168,6 +168,8 @@ function AddBookDialog({ open, onOpenChange, onCreateBook }) {
   const initialPageId = useId();
   const [draft, setDraft] = useState({ title: '', author: '', initialPage: '1' });
   const [errors, setErrors] = useState({});
+  const [submitError, setSubmitError] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   function handleOpenChange(nextOpen) {
     onOpenChange(nextOpen);
@@ -175,10 +177,12 @@ function AddBookDialog({ open, onOpenChange, onCreateBook }) {
     if (!nextOpen) {
       setDraft({ title: '', author: '', initialPage: '1' });
       setErrors({});
+      setSubmitError('');
+      setIsSaving(false);
     }
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
 
     const title = draft.title.trim();
@@ -198,15 +202,16 @@ function AddBookDialog({ open, onOpenChange, onCreateBook }) {
       return;
     }
 
-    onCreateBook({
-      id: `mock-book-${Date.now()}`,
-      title,
-      author: draft.author.trim(),
-      initialPage,
-      records: [],
-      createdAt: new Date().toISOString(),
-    });
-    handleOpenChange(false);
+    setIsSaving(true);
+    setSubmitError('');
+
+    try {
+      await onCreateBook({ title, author: draft.author.trim(), initialPage });
+      handleOpenChange(false);
+    } catch (requestError) {
+      setSubmitError(requestError.message);
+      setIsSaving(false);
+    }
   }
 
   return (
@@ -276,13 +281,14 @@ function AddBookDialog({ open, onOpenChange, onCreateBook }) {
               <p className="field-help">처음부터 읽는다면 1쪽 그대로 두면 돼요.</p>
             )}
           </div>
+          {submitError && <p className="field-error" role="alert">{submitError}</p>}
 
           <div className="add-book-dialog__actions">
             <DialogClose render={<Button type="button" variant="outline" />}>
               취소
             </DialogClose>
-            <Button type="submit">
-              책장에 꽂기
+            <Button type="submit" disabled={isSaving}>
+              {isSaving ? '책장에 꽂는 중이에요…' : '책장에 꽂기'}
             </Button>
           </div>
         </form>
@@ -393,6 +399,8 @@ export default function App() {
   const [user, setUser] = useState(() => readStoredUser());
   const [isAddBookOpen, setIsAddBookOpen] = useState(false);
   const [books, setBooks] = useState([]);
+  const [isBooksLoading, setIsBooksLoading] = useState(false);
+  const [booksError, setBooksError] = useState('');
   const [selectedBookId, setSelectedBookId] = useState(null);
   const [shouldStartReading, setShouldStartReading] = useState(false);
 
@@ -402,13 +410,37 @@ export default function App() {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (!user) return undefined;
+
+    let isCancelled = false;
+    setIsBooksLoading(true);
+    setBooksError('');
+
+    getBooks(user.id)
+      .then(({ books: fetchedBooks }) => {
+        if (!isCancelled) setBooks(fetchedBooks);
+      })
+      .catch((requestError) => {
+        if (!isCancelled) setBooksError(requestError.message);
+      })
+      .finally(() => {
+        if (!isCancelled) setIsBooksLoading(false);
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [user]);
+
   function handleOnboardingComplete(newUser) {
     window.localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(newUser));
     window.history.pushState({}, '', '/bookshelf');
     setUser(newUser);
   }
 
-  function handleCreateBook(newBook) {
+  async function handleCreateBook(input) {
+    const newBook = await createBook({ userId: user.id, ...input });
     setBooks((currentBooks) => [newBook, ...currentBooks]);
     setSelectedBookId(newBook.id);
     setShouldStartReading(false);
@@ -440,6 +472,14 @@ export default function App() {
 
   if (!user) {
     return <OnboardingPage onComplete={handleOnboardingComplete} />;
+  }
+
+  if (isBooksLoading) {
+    return <main className="bookshelf-preview"><p className="bookshelf-status">책장을 불러오고 있어요.</p></main>;
+  }
+
+  if (booksError) {
+    return <main className="bookshelf-preview"><p className="bookshelf-status field-error" role="alert">{booksError}</p></main>;
   }
 
   return (

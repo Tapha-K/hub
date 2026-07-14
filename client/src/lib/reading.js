@@ -3,6 +3,10 @@ export function getRecords(book) {
 }
 
 export function getLatestRecord(book) {
+  if (book.latestRecord) {
+    return book.latestRecord;
+  }
+
   return [...getRecords(book)].sort((left, right) => {
     const createdAtDifference = new Date(right.createdAt) - new Date(left.createdAt);
     return createdAtDifference || right.id - left.id;

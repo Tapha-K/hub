@@ -38,3 +38,14 @@ export function createUser({ nickname }) {
     body: JSON.stringify({ nickname }),
   });
 }
+
+export function getBooks(userId) {
+  return request(`/api/users/${userId}/books`);
+}
+
+export function createBook({ userId, title, author, initialPage }) {
+  return request('/api/books', {
+    method: 'POST',
+    body: JSON.stringify({ userId, title, author: author || null, initialPage }),
+  });
+}
