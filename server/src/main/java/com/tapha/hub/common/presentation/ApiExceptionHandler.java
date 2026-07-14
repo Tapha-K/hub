@@ -6,6 +6,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.tapha.hub.common.application.ResourceNotFoundException;
+
 @RestControllerAdvice
 public class ApiExceptionHandler {
 
@@ -17,5 +19,11 @@ public class ApiExceptionHandler {
                 .orElse("요청 값을 확인해 주세요.");
 
         return ResponseEntity.badRequest().body(new ApiError("VALIDATION_ERROR", message));
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ApiError> handleNotFound(ResourceNotFoundException exception) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ApiError("NOT_FOUND", exception.getMessage()));
     }
 }
