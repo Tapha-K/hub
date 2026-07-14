@@ -4,6 +4,7 @@ import java.time.Instant;
 
 import com.tapha.hub.book.domain.Book;
 import com.tapha.hub.book.domain.BookStatus;
+import com.tapha.hub.reading.presentation.ReadingRecordSummary;
 
 public record BookResponse(
         Long id,
@@ -13,6 +14,7 @@ public record BookResponse(
         BookStatus status,
         int recordCount,
         int nextStartPage,
+        ReadingRecordSummary latestRecord,
         Instant createdAt
 ) {
     public static BookResponse from(Book book) {
@@ -24,6 +26,7 @@ public record BookResponse(
                 book.getStatus(),
                 0,
                 book.getInitialPage(),
+                null,
                 book.getCreatedAt()
         );
     }

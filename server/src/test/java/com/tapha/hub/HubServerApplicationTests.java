@@ -16,6 +16,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.tapha.hub.user.domain.User;
 import com.tapha.hub.user.domain.UserRepository;
+import com.tapha.hub.book.domain.Book;
+import com.tapha.hub.book.domain.BookRepository;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -27,6 +29,9 @@ class HubServerApplicationTests {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private BookRepository bookRepository;
 
 	@Test
 	void contextLoads() {
@@ -85,6 +90,22 @@ class HubServerApplicationTests {
                                 """))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("NOT_FOUND"));
+    }
+
+    @Test
+    void listsReadingBooksForOneUserInCreatedOrder() throws Exception {
+        Long userId = userRepository.save(new User("다정", Instant.now())).getId();
+        bookRepository.save(new Book(userId, "오래된 책", null, 1, Instant.parse("2026-07-01T00:00:00Z")));
+        bookRepository.save(new Book(userId, "최근 책", "작가", 24, Instant.parse("2026-07-02T00:00:00Z")));
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .get("/api/users/{userId}/books", userId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.books.length()").value(2))
+                .andExpect(jsonPath("$.books[0].title").value("최근 책"))
+                .andExpect(jsonPath("$.books[0].nextStartPage").value(24))
+                .andExpect(jsonPath("$.books[0].latestRecord").doesNotExist())
+                .andExpect(jsonPath("$.books[1].title").value("오래된 책"));
     }
 
 }
