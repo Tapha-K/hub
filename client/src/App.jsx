@@ -1,5 +1,5 @@
 import { useEffect, useId, useState } from 'react';
-import { ArrowRight, Bookmark, BookOpen, NotebookPen, Plus } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Bookmark, BookOpen, NotebookPen, Plus } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -12,6 +12,14 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ReadingBookshelf } from '@/components/bookshelf/ReadingBookshelf';
+import { ReadingRecordList } from '@/components/bookshelf/ReadingRecordList';
+import { SessionRecordDialog } from '@/components/bookshelf/SessionRecordDialog';
+import {
+  getLatestRecord,
+  getNextStartPage,
+  getRecords,
+} from '@/lib/reading';
 
 const USER_STORAGE_KEY = 'itjang:user';
 
@@ -193,6 +201,8 @@ function AddBookDialog({ open, onOpenChange, onCreateBook }) {
       title,
       author: draft.author.trim(),
       initialPage,
+      records: [],
+      createdAt: new Date().toISOString(),
     });
     handleOpenChange(false);
   }
@@ -310,45 +320,69 @@ function EmptyBookshelf({ user, onAddBook }) {
   );
 }
 
-function ReadingBookshelf({ user, books, onAddBook }) {
+function BookDetailScreen({ book, startInReadingContext, onBackToBookshelf, onSaveRecord }) {
+  const [isReadingContextActive, setIsReadingContextActive] = useState(startInReadingContext);
+  const [isRecordDialogOpen, setIsRecordDialogOpen] = useState(false);
+  const records = getRecords(book);
+  const latestRecord = getLatestRecord(book);
+  const nextStartPage = getNextStartPage(book);
+
   return (
-    <main className="bookshelf-preview">
-      <header className="bookshelf-preview__header">
+    <main className="book-detail">
+      <header className="book-detail__header">
         <a href="/bookshelf" aria-label="잇장 홈">
           <BookOpen aria-hidden="true" size={19} strokeWidth={1.8} />
           <span>잇장</span>
         </a>
-        <span>{user.nickname}의 잇장</span>
+        <Button type="button" variant="ghost" onClick={onBackToBookshelf}>
+          <ArrowLeft aria-hidden="true" size={17} strokeWidth={1.8} />
+          책장으로 돌아가기
+        </Button>
       </header>
 
-      <section className="reading-bookshelf" aria-labelledby="reading-shelf-title">
-        <div className="reading-bookshelf__heading">
-          <div>
-            <p className="section-kicker">NOW READING</p>
-            <h1 id="reading-shelf-title">읽고 있는 책</h1>
-            <p>{books.length}권의 책이 다음 장을 기다리고 있어요.</p>
-          </div>
-          <Button className="reading-bookshelf__add" type="button" onClick={onAddBook}>
-            <Plus aria-hidden="true" size={17} strokeWidth={1.8} />
-            책 추가
-          </Button>
+      <article className="reading-note" aria-labelledby="book-detail-title">
+        <div className="reading-note__book-mark" aria-hidden="true">
+          <BookOpen size={28} strokeWidth={1.35} />
         </div>
+        <p className="section-kicker">READING NOTE</p>
+        <h1 id="book-detail-title">{book.title}</h1>
+        {book.author && <p className="reading-note__author">{book.author}</p>}
 
-        <div className="reading-shelf" aria-label="읽는 중인 책 선반">
-          <ul className="reading-shelf__books">
-            {books.map((book) => (
-              <li key={book.id}>
-                <article className="book-spine">
-                  <p className="book-spine__title">{book.title}</p>
-                  {book.author && <p className="book-spine__author">{book.author}</p>}
-                  <span className="book-spine__bookmark">{book.initialPage}쪽부터</span>
-                </article>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <p className="reading-shelf__note">책을 누르면 다음에는 지난 갈피부터 이어 읽을 수 있어요.</p>
-      </section>
+        <section className="bookmark-summary" aria-labelledby="bookmark-summary-title">
+          <p className="bookmark-summary__label" id="bookmark-summary-title">다음 책갈피</p>
+          <p className="bookmark-summary__page">
+            {latestRecord ? `지난번 ${latestRecord.endPage}쪽까지 읽었어요.` : `${book.initialPage}쪽부터 시작해 볼까요?`}
+          </p>
+          <p>다음에는 {nextStartPage}쪽부터 이어 읽을 수 있어요.</p>
+        </section>
+
+        <section className="start-reading-panel" aria-labelledby="start-reading-title">
+          <p className="section-kicker">NEXT READING</p>
+          <h2 id="start-reading-title">{nextStartPage}쪽부터 이어 읽어볼까요?</h2>
+          {isReadingContextActive ? (
+            <>
+              <p>다 읽고 돌아오면 기록을 남겨 주세요. 타이머 없이도 기록할 수 있어요.</p>
+              <Button type="button" onClick={() => setIsRecordDialogOpen(true)}>이번 읽기 기록 남기기</Button>
+            </>
+          ) : (
+            <Button type="button" onClick={() => setIsReadingContextActive(true)}>
+              {nextStartPage}쪽부터 이어 읽기
+              <ArrowRight aria-hidden="true" size={17} strokeWidth={1.8} />
+            </Button>
+          )}
+        </section>
+
+        <ReadingRecordList records={records} />
+      </article>
+      <SessionRecordDialog
+        book={book}
+        open={isRecordDialogOpen}
+        onOpenChange={setIsRecordDialogOpen}
+        onSave={(record) => {
+          onSaveRecord(book.id, record);
+          setIsReadingContextActive(false);
+        }}
+      />
     </main>
   );
 }
@@ -357,6 +391,8 @@ export default function App() {
   const [user, setUser] = useState(() => readStoredUser());
   const [isAddBookOpen, setIsAddBookOpen] = useState(false);
   const [books, setBooks] = useState([]);
+  const [selectedBookId, setSelectedBookId] = useState(null);
+  const [shouldStartReading, setShouldStartReading] = useState(false);
 
   useEffect(() => {
     if (user && window.location.pathname === '/') {
@@ -372,7 +408,33 @@ export default function App() {
 
   function handleCreateBook(newBook) {
     setBooks((currentBooks) => [newBook, ...currentBooks]);
+    setSelectedBookId(newBook.id);
+    setShouldStartReading(false);
   }
+
+  function handleSaveRecord(bookId, recordInput) {
+    const newRecord = {
+      id: Date.now(),
+      ...recordInput,
+      createdAt: new Date().toISOString(),
+    };
+
+    setBooks((currentBooks) => currentBooks.map((book) => (
+      book.id === bookId ? { ...book, records: [...getRecords(book), newRecord] } : book
+    )));
+  }
+
+  function handleSelectBook(bookId) {
+    setSelectedBookId(bookId);
+    setShouldStartReading(false);
+  }
+
+  function handleContinueReading(bookId) {
+    setSelectedBookId(bookId);
+    setShouldStartReading(true);
+  }
+
+  const selectedBook = books.find((book) => book.id === selectedBookId);
 
   if (!user) {
     return <OnboardingPage onComplete={handleOnboardingComplete} />;
@@ -380,8 +442,25 @@ export default function App() {
 
   return (
     <>
-      {books.length ? (
-        <ReadingBookshelf user={user} books={books} onAddBook={() => setIsAddBookOpen(true)} />
+      {selectedBook ? (
+        <BookDetailScreen
+          key={`${selectedBook.id}-${shouldStartReading}`}
+          book={selectedBook}
+          startInReadingContext={shouldStartReading}
+          onBackToBookshelf={() => {
+            setSelectedBookId(null);
+            setShouldStartReading(false);
+          }}
+          onSaveRecord={handleSaveRecord}
+        />
+      ) : books.length ? (
+        <ReadingBookshelf
+          user={user}
+          books={books}
+          onAddBook={() => setIsAddBookOpen(true)}
+          onSelectBook={handleSelectBook}
+          onContinueReading={handleContinueReading}
+        />
       ) : (
         <EmptyBookshelf user={user} onAddBook={() => setIsAddBookOpen(true)} />
       )}
