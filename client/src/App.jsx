@@ -15,6 +15,25 @@ import { Label } from '@/components/ui/label';
 
 const USER_STORAGE_KEY = 'itjang:user';
 
+function getRecords(book) {
+  return book.records ?? [];
+}
+
+function getLatestRecord(book) {
+  return [...getRecords(book)].sort((left, right) => {
+    const createdAtDifference = new Date(right.createdAt) - new Date(left.createdAt);
+    return createdAtDifference || right.id - left.id;
+  })[0] ?? null;
+}
+
+function getNextStartPage(book) {
+  return (getLatestRecord(book)?.endPage ?? book.initialPage - 1) + 1;
+}
+
+function formatRecordDate(createdAt) {
+  return new Intl.DateTimeFormat('ko-KR', { dateStyle: 'long' }).format(new Date(createdAt));
+}
+
 function readStoredUser() {
   try {
     const storedUser = window.localStorage.getItem(USER_STORAGE_KEY);
@@ -359,7 +378,143 @@ function ReadingBookshelf({ user, books, onAddBook, onSelectBook }) {
   );
 }
 
-function BookDetailScreen({ book, onBackToBookshelf }) {
+function SessionRecordDialog({ book, open, onOpenChange, onSave }) {
+  const endPageId = useId();
+  const impressionId = useId();
+  const overrideId = useId();
+  const [draft, setDraft] = useState({ endPage: '', impression: '', startPageOverride: '' });
+  const [errors, setErrors] = useState({});
+  const [isOverrideOpen, setIsOverrideOpen] = useState(false);
+  const defaultStartPage = getNextStartPage(book);
+  const startPage = isOverrideOpen && draft.startPageOverride !== ''
+    ? Number(draft.startPageOverride)
+    : defaultStartPage;
+  const endPage = Number(draft.endPage);
+  const hasValidRange = Number.isInteger(startPage) && startPage >= 1
+    && Number.isInteger(endPage) && endPage >= startPage;
+
+  function resetDraft() {
+    setDraft({ endPage: '', impression: '', startPageOverride: '' });
+    setErrors({});
+    setIsOverrideOpen(false);
+  }
+
+  function handleOpenChange(nextOpen) {
+    onOpenChange(nextOpen);
+    if (!nextOpen) resetDraft();
+  }
+
+  function handleSubmit(event) {
+    event.preventDefault();
+    const nextErrors = {};
+
+    if (!Number.isInteger(endPage) || endPage < 1) {
+      nextErrors.endPage = '1 이상의 끝난 페이지를 입력해 주세요.';
+    } else if (!Number.isInteger(startPage) || startPage < 1) {
+      nextErrors.startPageOverride = '1 이상의 시작 페이지를 입력해 주세요.';
+    } else if (endPage < startPage) {
+      nextErrors.endPage = `끝난 페이지는 ${startPage}쪽보다 앞설 수 없어요.`;
+    }
+
+    if (Object.keys(nextErrors).length) {
+      setErrors(nextErrors);
+      return;
+    }
+
+    onSave({ startPage, endPage, impression: draft.impression.trim() });
+    handleOpenChange(false);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="record-dialog" showCloseButton={false}>
+        <DialogHeader className="record-dialog__header">
+          <p className="section-kicker">ADD A RECORD</p>
+          <DialogTitle>오늘 읽은 자리를 남겨볼까요?</DialogTitle>
+          <DialogDescription>{startPage}쪽부터 읽은 기록으로 남겨요.</DialogDescription>
+        </DialogHeader>
+
+        <form className="record-dialog__form" onSubmit={handleSubmit} noValidate>
+          <div className="field-group">
+            <Label htmlFor={endPageId}>오늘 끝낸 페이지</Label>
+            <Input
+              id={endPageId}
+              name="endPage"
+              type="number"
+              min={startPage || 1}
+              inputMode="numeric"
+              value={draft.endPage}
+              onChange={(event) => {
+                setDraft((current) => ({ ...current, endPage: event.target.value }));
+                if (errors.endPage) setErrors((current) => ({ ...current, endPage: undefined }));
+              }}
+              placeholder={`예: ${startPage + 15}`}
+              autoFocus
+              aria-invalid={Boolean(errors.endPage)}
+            />
+            {errors.endPage && <p className="field-error" role="alert">{errors.endPage}</p>}
+          </div>
+
+          <div className="record-range-preview" role="status" aria-live="polite">
+            {hasValidRange
+              ? `${startPage}–${endPage}쪽 · ${endPage - startPage + 1}쪽 읽음`
+              : `${startPage}쪽부터 읽은 범위를 보여드릴게요.`}
+          </div>
+
+          <div className="field-group">
+            <Label htmlFor={impressionId}>짧은 감상 <span>선택</span></Label>
+            <textarea
+              id={impressionId}
+              name="impression"
+              value={draft.impression}
+              onChange={(event) => setDraft((current) => ({ ...current, impression: event.target.value }))}
+              placeholder="한 줄이면 충분해요. 비워 두어도 괜찮아요."
+              rows={4}
+            />
+          </div>
+
+          {!isOverrideOpen ? (
+            <Button className="record-dialog__override" type="button" variant="link" onClick={() => setIsOverrideOpen(true)}>
+              시작 위치 직접 바꾸기
+            </Button>
+          ) : (
+            <div className="field-group record-dialog__override-input">
+              <Label htmlFor={overrideId}>시작 페이지</Label>
+              <Input
+                id={overrideId}
+                name="startPageOverride"
+                type="number"
+                min="1"
+                inputMode="numeric"
+                value={draft.startPageOverride}
+                onChange={(event) => {
+                  setDraft((current) => ({ ...current, startPageOverride: event.target.value }));
+                  if (errors.startPageOverride) setErrors((current) => ({ ...current, startPageOverride: undefined }));
+                }}
+                placeholder={String(defaultStartPage)}
+                aria-invalid={Boolean(errors.startPageOverride)}
+              />
+              {errors.startPageOverride && <p className="field-error" role="alert">{errors.startPageOverride}</p>}
+            </div>
+          )}
+
+          <div className="record-dialog__actions">
+            <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>취소</Button>
+            <Button type="submit">기록 페이지 추가</Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function BookDetailScreen({ book, onBackToBookshelf, onSaveRecord }) {
+  const [isReadingContextActive, setIsReadingContextActive] = useState(false);
+  const [isRecordDialogOpen, setIsRecordDialogOpen] = useState(false);
+  const records = getRecords(book);
+  const latestRecord = getLatestRecord(book);
+  const nextStartPage = getNextStartPage(book);
+
   return (
     <main className="book-detail">
       <header className="book-detail__header">
@@ -383,16 +538,55 @@ function BookDetailScreen({ book, onBackToBookshelf }) {
 
         <section className="bookmark-summary" aria-labelledby="bookmark-summary-title">
           <p className="bookmark-summary__label" id="bookmark-summary-title">다음 책갈피</p>
-          <p className="bookmark-summary__page">{book.initialPage}쪽부터 시작해 볼까요?</p>
-          <p>읽고 돌아오면 끝낸 페이지와 짧은 생각을 한 장의 기록으로 남길 수 있어요.</p>
+          <p className="bookmark-summary__page">
+            {latestRecord ? `지난번 ${latestRecord.endPage}쪽까지 읽었어요.` : `${book.initialPage}쪽부터 시작해 볼까요?`}
+          </p>
+          <p>다음에는 {nextStartPage}쪽부터 이어 읽을 수 있어요.</p>
         </section>
 
-        <section className="reading-note__empty-records" aria-labelledby="record-list-title">
+        <section className="start-reading-panel" aria-labelledby="start-reading-title">
+          <p className="section-kicker">NEXT READING</p>
+          <h2 id="start-reading-title">{nextStartPage}쪽부터 이어 읽어볼까요?</h2>
+          {isReadingContextActive ? (
+            <>
+              <p>다 읽고 돌아오면 기록을 남겨 주세요. 타이머 없이도 기록할 수 있어요.</p>
+              <Button type="button" onClick={() => setIsRecordDialogOpen(true)}>이번 읽기 기록 남기기</Button>
+            </>
+          ) : (
+            <Button type="button" onClick={() => setIsReadingContextActive(true)}>
+              {nextStartPage}쪽부터 이어 읽기
+              <ArrowRight aria-hidden="true" size={17} strokeWidth={1.8} />
+            </Button>
+          )}
+        </section>
+
+        <section className="record-list" aria-labelledby="record-list-title">
           <p className="section-kicker">RECORDS</p>
-          <h2 id="record-list-title">아직 남긴 기록이 없어요.</h2>
-          <p>이 책의 첫 독서 기록은 다음 작업에서 이곳에 차곡차곡 쌓입니다.</p>
+          <h2 id="record-list-title">{records.length ? '읽은 자리가 한 장씩 쌓이고 있어요.' : '아직 남긴 기록이 없어요.'}</h2>
+          {records.length ? (
+            <ol>
+              {records.map((record) => (
+                <li key={record.id} className="record-page">
+                  <time dateTime={record.createdAt}>{formatRecordDate(record.createdAt)}</time>
+                  <strong>{record.startPage}–{record.endPage}쪽 · {record.endPage - record.startPage + 1}쪽 읽음</strong>
+                  {record.impression && <p>{record.impression}</p>}
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <p className="record-list__empty">첫 독서 기록을 이곳에 남겨 보세요.</p>
+          )}
         </section>
       </article>
+      <SessionRecordDialog
+        book={book}
+        open={isRecordDialogOpen}
+        onOpenChange={setIsRecordDialogOpen}
+        onSave={(record) => {
+          onSaveRecord(book.id, record);
+          setIsReadingContextActive(false);
+        }}
+      />
     </main>
   );
 }
@@ -420,6 +614,18 @@ export default function App() {
     setSelectedBookId(newBook.id);
   }
 
+  function handleSaveRecord(bookId, recordInput) {
+    const newRecord = {
+      id: Date.now(),
+      ...recordInput,
+      createdAt: new Date().toISOString(),
+    };
+
+    setBooks((currentBooks) => currentBooks.map((book) => (
+      book.id === bookId ? { ...book, records: [...getRecords(book), newRecord] } : book
+    )));
+  }
+
   const selectedBook = books.find((book) => book.id === selectedBookId);
 
   if (!user) {
@@ -429,7 +635,12 @@ export default function App() {
   return (
     <>
       {selectedBook ? (
-        <BookDetailScreen book={selectedBook} onBackToBookshelf={() => setSelectedBookId(null)} />
+        <BookDetailScreen
+          key={selectedBook.id}
+          book={selectedBook}
+          onBackToBookshelf={() => setSelectedBookId(null)}
+          onSaveRecord={handleSaveRecord}
+        />
       ) : books.length ? (
         <ReadingBookshelf
           user={user}
