@@ -10,6 +10,7 @@ import com.tapha.hub.book.domain.Book;
 import com.tapha.hub.book.domain.BookRepository;
 import com.tapha.hub.book.domain.BookStatus;
 import com.tapha.hub.book.presentation.BookResponse;
+import com.tapha.hub.book.presentation.BookDetailResponse;
 import com.tapha.hub.book.presentation.BookshelfResponse;
 import com.tapha.hub.book.presentation.CreateBookRequest;
 import com.tapha.hub.common.application.ResourceNotFoundException;
@@ -56,6 +57,14 @@ public class BookService {
                 .toList();
 
         return new BookshelfResponse(books);
+    }
+
+    @Transactional(readOnly = true)
+    public BookDetailResponse getBook(Long bookId, Long userId) {
+        Book book = bookRepository.findByIdAndUserId(bookId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("책을 찾을 수 없어요."));
+
+        return BookDetailResponse.from(book);
     }
 
     private String normalizeAuthor(String author) {

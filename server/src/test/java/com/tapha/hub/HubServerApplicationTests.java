@@ -108,4 +108,26 @@ class HubServerApplicationTests {
                 .andExpect(jsonPath("$.books[1].title").value("오래된 책"));
     }
 
+    @Test
+    void getsBookDetailOnlyForItsOwner() throws Exception {
+        Long ownerId = userRepository.save(new User("다정", Instant.now())).getId();
+        Long otherUserId = userRepository.save(new User("서연", Instant.now())).getId();
+        Long bookId = bookRepository.save(new Book(ownerId, "독서 기록", "작가", 18, Instant.now())).getId();
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .get("/api/books/{bookId}", bookId)
+                        .param("userId", String.valueOf(ownerId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("독서 기록"))
+                .andExpect(jsonPath("$.nextStartPage").value(18))
+                .andExpect(jsonPath("$.latestRecord").doesNotExist())
+                .andExpect(jsonPath("$.readingRecords.length()").value(0));
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .get("/api/books/{bookId}", bookId)
+                        .param("userId", String.valueOf(otherUserId)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"));
+    }
+
 }
