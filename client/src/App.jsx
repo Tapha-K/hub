@@ -34,6 +34,23 @@ function formatRecordDate(createdAt) {
   return new Intl.DateTimeFormat('ko-KR', { dateStyle: 'long' }).format(new Date(createdAt));
 }
 
+function getContinueBook(books) {
+  return [...books].sort((left, right) => {
+    const leftLatestRecord = getLatestRecord(left);
+    const rightLatestRecord = getLatestRecord(right);
+
+    if (leftLatestRecord && rightLatestRecord) {
+      const createdAtDifference = new Date(rightLatestRecord.createdAt) - new Date(leftLatestRecord.createdAt);
+      return createdAtDifference || rightLatestRecord.id - leftLatestRecord.id;
+    }
+
+    if (rightLatestRecord) return 1;
+    if (leftLatestRecord) return -1;
+
+    return new Date(right.createdAt ?? 0) - new Date(left.createdAt ?? 0);
+  })[0] ?? null;
+}
+
 function readStoredUser() {
   try {
     const storedUser = window.localStorage.getItem(USER_STORAGE_KEY);
@@ -213,6 +230,7 @@ function AddBookDialog({ open, onOpenChange, onCreateBook }) {
       author: draft.author.trim(),
       initialPage,
       records: [],
+      createdAt: new Date().toISOString(),
     });
     handleOpenChange(false);
   }
@@ -330,7 +348,34 @@ function EmptyBookshelf({ user, onAddBook }) {
   );
 }
 
-function ReadingBookshelf({ user, books, onAddBook, onSelectBook }) {
+function ContinueReadingCard({ book, onContinueReading }) {
+  const latestRecord = getLatestRecord(book);
+  const nextStartPage = getNextStartPage(book);
+
+  return (
+    <section className="continue-reading-card" aria-labelledby="continue-reading-title">
+      <div>
+        <p className="section-kicker">{latestRecord ? 'PICK UP WHERE YOU LEFT OFF' : 'YOUR FIRST PAGE'}</p>
+        <h2 id="continue-reading-title">{book.title}</h2>
+        {book.author && <p className="continue-reading-card__author">{book.author}</p>}
+        <p className="continue-reading-card__summary">
+          {latestRecord
+            ? `지난번 ${latestRecord.endPage}쪽까지 읽었어요.`
+            : `${book.initialPage}쪽에서 첫 읽기를 시작해 볼까요?`}
+        </p>
+        {latestRecord?.impression && <p className="continue-reading-card__impression">“{latestRecord.impression}”</p>}
+      </div>
+      <Button type="button" onClick={() => onContinueReading(book.id)}>
+        {nextStartPage}쪽부터 {latestRecord ? '이어 읽기' : '읽기'}
+        <ArrowRight aria-hidden="true" size={17} strokeWidth={1.8} />
+      </Button>
+    </section>
+  );
+}
+
+function ReadingBookshelf({ user, books, onAddBook, onSelectBook, onContinueReading }) {
+  const continueBook = getContinueBook(books);
+
   return (
     <main className="bookshelf-preview">
       <header className="bookshelf-preview__header">
@@ -342,6 +387,7 @@ function ReadingBookshelf({ user, books, onAddBook, onSelectBook }) {
       </header>
 
       <section className="reading-bookshelf" aria-labelledby="reading-shelf-title">
+        <ContinueReadingCard book={continueBook} onContinueReading={onContinueReading} />
         <div className="reading-bookshelf__heading">
           <div>
             <p className="section-kicker">NOW READING</p>
@@ -366,7 +412,7 @@ function ReadingBookshelf({ user, books, onAddBook, onSelectBook }) {
                 >
                   <span className="book-spine__title">{book.title}</span>
                   {book.author && <span className="book-spine__author">{book.author}</span>}
-                  <span className="book-spine__bookmark">{book.initialPage}쪽부터</span>
+                  <span className="book-spine__bookmark">{getNextStartPage(book)}쪽부터</span>
                 </button>
               </li>
             ))}
@@ -508,8 +554,8 @@ function SessionRecordDialog({ book, open, onOpenChange, onSave }) {
   );
 }
 
-function BookDetailScreen({ book, onBackToBookshelf, onSaveRecord }) {
-  const [isReadingContextActive, setIsReadingContextActive] = useState(false);
+function BookDetailScreen({ book, startInReadingContext, onBackToBookshelf, onSaveRecord }) {
+  const [isReadingContextActive, setIsReadingContextActive] = useState(startInReadingContext);
   const [isRecordDialogOpen, setIsRecordDialogOpen] = useState(false);
   const records = getRecords(book);
   const latestRecord = getLatestRecord(book);
@@ -596,6 +642,7 @@ export default function App() {
   const [isAddBookOpen, setIsAddBookOpen] = useState(false);
   const [books, setBooks] = useState([]);
   const [selectedBookId, setSelectedBookId] = useState(null);
+  const [shouldStartReading, setShouldStartReading] = useState(false);
 
   useEffect(() => {
     if (user && window.location.pathname === '/') {
@@ -612,6 +659,7 @@ export default function App() {
   function handleCreateBook(newBook) {
     setBooks((currentBooks) => [newBook, ...currentBooks]);
     setSelectedBookId(newBook.id);
+    setShouldStartReading(false);
   }
 
   function handleSaveRecord(bookId, recordInput) {
@@ -626,6 +674,16 @@ export default function App() {
     )));
   }
 
+  function handleSelectBook(bookId) {
+    setSelectedBookId(bookId);
+    setShouldStartReading(false);
+  }
+
+  function handleContinueReading(bookId) {
+    setSelectedBookId(bookId);
+    setShouldStartReading(true);
+  }
+
   const selectedBook = books.find((book) => book.id === selectedBookId);
 
   if (!user) {
@@ -636,9 +694,13 @@ export default function App() {
     <>
       {selectedBook ? (
         <BookDetailScreen
-          key={selectedBook.id}
+          key={`${selectedBook.id}-${shouldStartReading}`}
           book={selectedBook}
-          onBackToBookshelf={() => setSelectedBookId(null)}
+          startInReadingContext={shouldStartReading}
+          onBackToBookshelf={() => {
+            setSelectedBookId(null);
+            setShouldStartReading(false);
+          }}
           onSaveRecord={handleSaveRecord}
         />
       ) : books.length ? (
@@ -646,7 +708,8 @@ export default function App() {
           user={user}
           books={books}
           onAddBook={() => setIsAddBookOpen(true)}
-          onSelectBook={setSelectedBookId}
+          onSelectBook={handleSelectBook}
+          onContinueReading={handleContinueReading}
         />
       ) : (
         <EmptyBookshelf user={user} onAddBook={() => setIsAddBookOpen(true)} />
