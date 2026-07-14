@@ -63,6 +63,13 @@ input:focus-visible {
   overflow: hidden;
 }
 
+.bookshelf-status {
+  width: min(100%, 32rem);
+  margin: 24vh auto 0;
+  color: var(--muted);
+  text-align: center;
+}
+
 .onboarding-page {
   display: grid;
   grid-template-columns: minmax(1.5rem, 1fr) minmax(0, 37rem) minmax(19rem, 27rem) minmax(1.5rem, 1fr);
