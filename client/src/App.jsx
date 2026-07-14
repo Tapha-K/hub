@@ -20,6 +20,7 @@ import {
   getNextStartPage,
   getRecords,
 } from '@/lib/reading';
+import { createUser } from '@/lib/api';
 
 const USER_STORAGE_KEY = 'itjang:user';
 
@@ -39,7 +40,7 @@ function OnboardingPage({ onComplete }) {
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
     const trimmedNickname = nickname.trim();
 
@@ -51,12 +52,13 @@ function OnboardingPage({ onComplete }) {
     setError('');
     setIsSaving(true);
 
-    window.setTimeout(() => {
-      onComplete({
-        id: `mock-user-${Date.now()}`,
-        nickname: trimmedNickname,
-      });
-    }, 350);
+    try {
+      const user = await createUser({ nickname: trimmedNickname });
+      onComplete(user);
+    } catch (requestError) {
+      setError(requestError.message);
+      setIsSaving(false);
+    }
   }
 
   return (
