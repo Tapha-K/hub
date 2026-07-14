@@ -20,7 +20,7 @@ import {
   getNextStartPage,
   getRecords,
 } from '@/lib/reading';
-import { createBook, createUser, getBooks } from '@/lib/api';
+import { createBook, createReadingRecord, createUser, getBook, getBooks } from '@/lib/api';
 
 const USER_STORAGE_KEY = 'itjang:user';
 
@@ -386,8 +386,8 @@ function BookDetailScreen({ book, startInReadingContext, onBackToBookshelf, onSa
         book={book}
         open={isRecordDialogOpen}
         onOpenChange={setIsRecordDialogOpen}
-        onSave={(record) => {
-          onSaveRecord(book.id, record);
+        onSave={async (record) => {
+          await onSaveRecord(book.id, record);
           setIsReadingContextActive(false);
         }}
       />
@@ -402,6 +402,9 @@ export default function App() {
   const [isBooksLoading, setIsBooksLoading] = useState(false);
   const [booksError, setBooksError] = useState('');
   const [selectedBookId, setSelectedBookId] = useState(null);
+  const [bookDetail, setBookDetail] = useState(null);
+  const [isBookDetailLoading, setIsBookDetailLoading] = useState(false);
+  const [bookDetailError, setBookDetailError] = useState('');
   const [shouldStartReading, setShouldStartReading] = useState(false);
 
   useEffect(() => {
@@ -409,6 +412,30 @@ export default function App() {
       window.history.replaceState({}, '', '/bookshelf');
     }
   }, [user]);
+
+  useEffect(() => {
+    if (!selectedBookId || !user) return undefined;
+
+    let isCancelled = false;
+    setIsBookDetailLoading(true);
+    setBookDetailError('');
+    setBookDetail(null);
+
+    getBook(selectedBookId, user.id)
+      .then((detail) => {
+        if (!isCancelled) setBookDetail(detail);
+      })
+      .catch((requestError) => {
+        if (!isCancelled) setBookDetailError(requestError.message);
+      })
+      .finally(() => {
+        if (!isCancelled) setIsBookDetailLoading(false);
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [selectedBookId, user]);
 
   useEffect(() => {
     if (!user) return undefined;
@@ -446,16 +473,14 @@ export default function App() {
     setShouldStartReading(false);
   }
 
-  function handleSaveRecord(bookId, recordInput) {
-    const newRecord = {
-      id: Date.now(),
-      ...recordInput,
-      createdAt: new Date().toISOString(),
-    };
-
-    setBooks((currentBooks) => currentBooks.map((book) => (
-      book.id === bookId ? { ...book, records: [...getRecords(book), newRecord] } : book
-    )));
+  async function handleSaveRecord(bookId, recordInput) {
+    await createReadingRecord({ bookId, userId: user.id, ...recordInput });
+    const [{ books: refreshedBooks }, refreshedDetail] = await Promise.all([
+      getBooks(user.id),
+      getBook(bookId, user.id),
+    ]);
+    setBooks(refreshedBooks);
+    setBookDetail(refreshedDetail);
   }
 
   function handleSelectBook(bookId) {
@@ -484,10 +509,14 @@ export default function App() {
 
   return (
     <>
-      {selectedBook ? (
+      {selectedBookId && isBookDetailLoading ? (
+        <main className="book-detail"><p className="bookshelf-status">책의 기록을 불러오고 있어요.</p></main>
+      ) : selectedBookId && bookDetailError ? (
+        <main className="book-detail"><p className="bookshelf-status field-error" role="alert">{bookDetailError}</p></main>
+      ) : selectedBookId && bookDetail ? (
         <BookDetailScreen
-          key={`${selectedBook.id}-${shouldStartReading}`}
-          book={selectedBook}
+          key={`${bookDetail.id}-${shouldStartReading}`}
+          book={bookDetail}
           startInReadingContext={shouldStartReading}
           onBackToBookshelf={() => {
             setSelectedBookId(null);

@@ -1,5 +1,5 @@
 export function getRecords(book) {
-  return book.records ?? [];
+  return book.readingRecords ?? book.records ?? [];
 }
 
 export function getLatestRecord(book) {

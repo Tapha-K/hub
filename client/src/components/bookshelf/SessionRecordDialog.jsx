@@ -19,6 +19,8 @@ export function SessionRecordDialog({ book, open, onOpenChange, onSave }) {
   const [draft, setDraft] = useState({ endPage: '', impression: '', startPageOverride: '' });
   const [errors, setErrors] = useState({});
   const [isOverrideOpen, setIsOverrideOpen] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
   const defaultStartPage = getNextStartPage(book);
   const startPage = isOverrideOpen && draft.startPageOverride !== ''
     ? Number(draft.startPageOverride)
@@ -31,6 +33,8 @@ export function SessionRecordDialog({ book, open, onOpenChange, onSave }) {
     setDraft({ endPage: '', impression: '', startPageOverride: '' });
     setErrors({});
     setIsOverrideOpen(false);
+    setSubmitError('');
+    setIsSaving(false);
   }
 
   function handleOpenChange(nextOpen) {
@@ -38,7 +42,7 @@ export function SessionRecordDialog({ book, open, onOpenChange, onSave }) {
     if (!nextOpen) resetDraft();
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
     const nextErrors = {};
 
@@ -55,8 +59,19 @@ export function SessionRecordDialog({ book, open, onOpenChange, onSave }) {
       return;
     }
 
-    onSave({ startPage, endPage, impression: draft.impression.trim() });
-    handleOpenChange(false);
+    setIsSaving(true);
+    setSubmitError('');
+    try {
+      await onSave({
+        endPage,
+        startPageOverride: isOverrideOpen ? startPage : null,
+        impression: draft.impression.trim(),
+      });
+      handleOpenChange(false);
+    } catch (requestError) {
+      setSubmitError(requestError.message);
+      setIsSaving(false);
+    }
   }
 
   return (
@@ -131,10 +146,11 @@ export function SessionRecordDialog({ book, open, onOpenChange, onSave }) {
               {errors.startPageOverride && <p className="field-error" role="alert">{errors.startPageOverride}</p>}
             </div>
           )}
+          {submitError && <p className="field-error" role="alert">{submitError}</p>}
 
           <div className="record-dialog__actions">
-            <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>취소</Button>
-            <Button type="submit">기록 페이지 추가</Button>
+            <Button type="button" variant="outline" disabled={isSaving} onClick={() => handleOpenChange(false)}>취소</Button>
+            <Button type="submit" disabled={isSaving}>{isSaving ? '기록을 남기는 중이에요…' : '기록 페이지 추가'}</Button>
           </div>
         </form>
       </DialogContent>

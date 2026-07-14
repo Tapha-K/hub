@@ -49,3 +49,14 @@ export function createBook({ userId, title, author, initialPage }) {
     body: JSON.stringify({ userId, title, author: author || null, initialPage }),
   });
 }
+
+export function getBook(bookId, userId) {
+  return request(`/api/books/${bookId}?userId=${encodeURIComponent(userId)}`);
+}
+
+export function createReadingRecord({ bookId, userId, endPage, startPageOverride, impression }) {
+  return request(`/api/books/${bookId}/records`, {
+    method: 'POST',
+    body: JSON.stringify({ userId, endPage, startPageOverride: startPageOverride || null, impression: impression || null }),
+  });
+}
