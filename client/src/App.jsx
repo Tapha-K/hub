@@ -465,13 +465,17 @@ function BookDetailScreen({
         <ReadingRecordList
           records={records}
           latestRecord={latestRecord}
-          onEditRecord={setEditingRecord}
+          onEditRecord={(record) => setEditingRecord({
+            record,
+            canEditPage: record.id === latestRecord?.id,
+          })}
           onDeleteRecord={setDeletingRecord}
         />
       </article>
       <SessionRecordDialog
         book={book}
-        record={editingRecord}
+        record={editingRecord?.record}
+        canEditPage={editingRecord?.canEditPage ?? true}
         open={isRecordDialogOpen || Boolean(editingRecord)}
         onOpenChange={(nextOpen) => {
           if (!nextOpen) {
@@ -481,7 +485,7 @@ function BookDetailScreen({
         }}
         onSave={async (record) => {
           if (editingRecord) {
-            await onUpdateRecord(book.id, editingRecord.id, record);
+            await onUpdateRecord(book.id, editingRecord.record.id, record);
           } else {
             await onSaveRecord(book.id, record);
             setIsReadingContextActive(false);

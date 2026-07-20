@@ -13,16 +13,16 @@ export function ReadingRecordList({ records, latestRecord, onEditRecord, onDelet
               <time dateTime={record.createdAt}>{formatRecordDate(record.createdAt)}</time>
               <strong>{record.startPage}–{record.endPage}쪽 · {record.endPage - record.startPage + 1}쪽 읽음</strong>
               {record.impression && <p>{record.impression}</p>}
-              {record.id === latestRecord?.id && (
-                <div className="record-page__actions" aria-label="가장 최근 기록 작업">
-                  <Button type="button" variant="ghost" size="sm" onClick={() => onEditRecord(record)}>
-                    수정
-                  </Button>
+              <div className="record-page__actions" aria-label="기록 작업">
+                <Button type="button" variant="ghost" size="sm" onClick={() => onEditRecord(record)}>
+                  수정
+                </Button>
+                {record.id === latestRecord?.id && (
                   <Button type="button" variant="ghost" size="sm" onClick={() => onDeleteRecord(record)}>
                     삭제
                   </Button>
-                </div>
-              )}
+                )}
+              </div>
             </li>
           ))}
         </ol>

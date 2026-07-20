@@ -47,12 +47,16 @@ public class ReadingRecordService {
     public CreateReadingRecordResponse update(Long bookId, Long recordId, UpdateReadingRecordRequest request) {
         bookRepository.findByIdAndUserId(bookId, request.userId())
                 .orElseThrow(() -> new ResourceNotFoundException("책을 찾을 수 없어요."));
-        ReadingRecord record = findLatestRecord(bookId, recordId, request.userId());
-        if (request.endPage() < record.getStartPage()) {
+        ReadingRecord record = findOwnedRecord(bookId, recordId, request.userId());
+        boolean isLatest = isLatestRecord(bookId, recordId);
+        if (!isLatest && request.endPage() != record.getEndPage()) {
+            throw new InvalidRequestException("INVALID_RECORD_ACTION", "과거 기록은 감상만 수정할 수 있어요.");
+        }
+        if (isLatest && request.endPage() < record.getStartPage()) {
             throw new InvalidRequestException("끝난 페이지는 %d쪽보다 앞설 수 없어요.".formatted(record.getStartPage()));
         }
 
-        record.update(request.endPage(), normalizeImpression(request.impression()));
+        record.update(isLatest ? request.endPage() : record.getEndPage(), normalizeImpression(request.impression()));
         return new CreateReadingRecordResponse(ReadingRecordSummary.from(record), record.getEndPage() + 1);
     }
 
@@ -67,15 +71,22 @@ public class ReadingRecordService {
     }
 
     private ReadingRecord findLatestRecord(Long bookId, Long recordId, Long userId) {
-        ReadingRecord record = recordRepository.findByIdAndBookIdAndUserId(recordId, bookId, userId)
-                .orElseThrow(() -> new ResourceNotFoundException("기록을 찾을 수 없어요."));
-        boolean isLatest = recordRepository.findTopByBookIdOrderByCreatedAtDescIdDesc(bookId)
-                .map(latest -> latest.getId().equals(recordId))
-                .orElse(false);
-        if (!isLatest) {
+        ReadingRecord record = findOwnedRecord(bookId, recordId, userId);
+        if (!isLatestRecord(bookId, recordId)) {
             throw new InvalidRequestException("INVALID_RECORD_ACTION", "가장 최근 기록만 수정하거나 삭제할 수 있어요.");
         }
         return record;
+    }
+
+    private ReadingRecord findOwnedRecord(Long bookId, Long recordId, Long userId) {
+        return recordRepository.findByIdAndBookIdAndUserId(recordId, bookId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("기록을 찾을 수 없어요."));
+    }
+
+    private boolean isLatestRecord(Long bookId, Long recordId) {
+        return recordRepository.findTopByBookIdOrderByCreatedAtDescIdDesc(bookId)
+                .map(latest -> latest.getId().equals(recordId))
+                .orElse(false);
     }
 
     private int getNextStartPage(Long bookId, Book book) {

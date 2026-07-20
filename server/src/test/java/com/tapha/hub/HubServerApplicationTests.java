@@ -332,7 +332,7 @@ class HubServerApplicationTests {
     }
 
     @Test
-    void rejectsEditingOlderRecordAndAccessByAnotherUser() throws Exception {
+    void allowsEditingOlderImpressionOnlyAndRejectsPageChangeAndOtherUser() throws Exception {
         Long ownerId = userRepository.save(new User("다정", Instant.now())).getId();
         Long otherUserId = userRepository.save(new User("서연", Instant.now())).getId();
         Long bookId = bookRepository.save(new Book(ownerId, "기록 권한", null, 1, Instant.now())).getId();
@@ -342,6 +342,15 @@ class HubServerApplicationTests {
         ReadingRecord latest = readingRecordRepository.save(new ReadingRecord(
                 bookId, ownerId, 11, 20, null, Instant.parse("2026-07-02T00:00:00Z")
         ));
+
+        mockMvc.perform(patch("/api/books/{bookId}/records/{recordId}", bookId, older.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "userId": %d, "endPage": 10, "impression": "뒤늦게 남긴 감상" }
+                                """.formatted(ownerId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.record.endPage").value(10))
+                .andExpect(jsonPath("$.record.impression").value("뒤늦게 남긴 감상"));
 
         mockMvc.perform(patch("/api/books/{bookId}/records/{recordId}", bookId, older.getId())
                         .contentType(MediaType.APPLICATION_JSON)

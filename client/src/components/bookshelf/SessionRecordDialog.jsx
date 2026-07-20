@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { getNextStartPage } from '@/lib/reading';
 
-export function SessionRecordDialog({ book, record = null, open, onOpenChange, onSave }) {
+export function SessionRecordDialog({ book, record = null, canEditPage = true, open, onOpenChange, onSave }) {
   const endPageId = useId();
   const impressionId = useId();
   const overrideId = useId();
@@ -23,6 +23,7 @@ export function SessionRecordDialog({ book, record = null, open, onOpenChange, o
   const [isSaving, setIsSaving] = useState(false);
   const isEditing = Boolean(record);
   const defaultStartPage = record?.startPage ?? getNextStartPage(book);
+  const isPageEditable = !isEditing || canEditPage;
   const startPage = isOverrideOpen && draft.startPageOverride !== ''
     ? Number(draft.startPageOverride)
     : defaultStartPage;
@@ -99,7 +100,9 @@ export function SessionRecordDialog({ book, record = null, open, onOpenChange, o
       <DialogContent className="record-dialog" showCloseButton={false}>
         <DialogHeader className="record-dialog__header">
           <p className="section-kicker">{isEditing ? 'EDIT A RECORD' : 'ADD A RECORD'}</p>
-          <DialogTitle>{isEditing ? '기록을 고쳐볼까요?' : '오늘 읽은 자리를 남겨볼까요?'}</DialogTitle>
+          <DialogTitle>
+            {isEditing ? (isPageEditable ? '기록을 고쳐볼까요?' : '감상을 고쳐볼까요?') : '오늘 읽은 자리를 남겨볼까요?'}
+          </DialogTitle>
           <DialogDescription>
             {isEditing ? `${startPage}쪽부터 읽은 기록을 수정해요.` : `${startPage}쪽부터 읽은 기록으로 남겨요.`}
           </DialogDescription>
@@ -115,6 +118,7 @@ export function SessionRecordDialog({ book, record = null, open, onOpenChange, o
               min={startPage || 1}
               inputMode="numeric"
               value={draft.endPage}
+              readOnly={!isPageEditable}
               onChange={(event) => {
                 setDraft((current) => ({ ...current, endPage: event.target.value }));
                 if (errors.endPage) setErrors((current) => ({ ...current, endPage: undefined }));
@@ -124,6 +128,7 @@ export function SessionRecordDialog({ book, record = null, open, onOpenChange, o
               aria-invalid={Boolean(errors.endPage)}
             />
             {errors.endPage && <p className="field-error" role="alert">{errors.endPage}</p>}
+            {isEditing && !isPageEditable && <p className="field-help">과거 기록은 감상만 바꿀 수 있어요.</p>}
           </div>
 
           <div className="record-range-preview" role="status" aria-live="polite">
