@@ -11,6 +11,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -158,6 +159,109 @@ class HubServerApplicationTests {
                                 """.formatted(userId)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("INVALID_PAGE_RANGE"));
+    }
+
+    @Test
+    void updatesStatusToCompletedWithOptionalReviewAndKeepsBookmark() throws Exception {
+        Long userId = userRepository.save(new User("다정", Instant.now())).getId();
+        Long bookId = bookRepository.save(new Book(userId, "독서 기록", null, 20, Instant.now())).getId();
+
+        mockMvc.perform(post("/api/books/{bookId}/records", bookId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "userId": %d, "endPage": 32 }
+                                """.formatted(userId)))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(patch("/api/books/{bookId}/status", bookId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "userId": %d,
+                                  "status": "COMPLETED",
+                                  "finalReview": "끝까지 읽고 나서야 전체 흐름이 보였어요."
+                                }
+                                """.formatted(userId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("COMPLETED"))
+                .andExpect(jsonPath("$.finalReview").value("끝까지 읽고 나서야 전체 흐름이 보였어요."))
+                .andExpect(jsonPath("$.completedAt").isNotEmpty())
+                .andExpect(jsonPath("$.nextStartPage").value(33));
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .get("/api/books/{bookId}", bookId)
+                        .param("userId", String.valueOf(userId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("COMPLETED"))
+                .andExpect(jsonPath("$.finalReview").value("끝까지 읽고 나서야 전체 흐름이 보였어요."))
+                .andExpect(jsonPath("$.nextStartPage").value(33))
+                .andExpect(jsonPath("$.readingRecords.length()").value(1));
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .get("/api/users/{userId}/books", userId)
+                        .param("status", "COMPLETED"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.books.length()").value(1));
+    }
+
+    @Test
+    void archivesAndResumesBookWithoutChangingBookmark() throws Exception {
+        Long userId = userRepository.save(new User("다정", Instant.now())).getId();
+        Long bookId = bookRepository.save(new Book(userId, "잠시 멈춘 책", null, 1, Instant.now())).getId();
+
+        mockMvc.perform(post("/api/books/{bookId}/records", bookId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "userId": %d, "endPage": 18 }
+                                """.formatted(userId)))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(patch("/api/books/{bookId}/status", bookId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "userId": %d, "status": "ARCHIVED" }
+                                """.formatted(userId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ARCHIVED"))
+                .andExpect(jsonPath("$.nextStartPage").value(19));
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .get("/api/users/{userId}/books", userId)
+                        .param("status", "ARCHIVED"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.books.length()").value(1));
+
+        mockMvc.perform(patch("/api/books/{bookId}/status", bookId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "userId": %d, "status": "READING" }
+                                """.formatted(userId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("READING"))
+                .andExpect(jsonPath("$.nextStartPage").value(19));
+    }
+
+    @Test
+    void rejectsInvalidBookStatusTransitionAndUnknownOwner() throws Exception {
+        Long ownerId = userRepository.save(new User("다정", Instant.now())).getId();
+        Long otherUserId = userRepository.save(new User("서연", Instant.now())).getId();
+        Long bookId = bookRepository.save(new Book(ownerId, "상태 확인", null, 1, Instant.now())).getId();
+
+        mockMvc.perform(patch("/api/books/{bookId}/status", bookId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "userId": %d, "status": "READING" }
+                                """.formatted(ownerId)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_BOOK_STATUS"));
+
+        mockMvc.perform(patch("/api/books/{bookId}/status", bookId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "userId": %d, "status": "ARCHIVED" }
+                                """.formatted(otherUserId)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"));
     }
 
 }
