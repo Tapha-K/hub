@@ -284,6 +284,37 @@ function BookModel({ book, index, total, selectedBookId, bookOpeningPhase, openi
   );
 }
 
+function RoomModel() {
+  return (
+    <group>
+      <RoundedBox args={[16, 8, 0.16]} radius={0.08} smoothness={3} position={[0, 2.1, -2.35]} receiveShadow>
+        <meshStandardMaterial color="#f3e7d3" roughness={0.96} />
+      </RoundedBox>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2.12, 1.2]} receiveShadow>
+        <planeGeometry args={[18, 14]} />
+        <meshStandardMaterial color="#afc9de" roughness={0.98} />
+      </mesh>
+      <RoundedBox args={[8, 0.28, 2.5]} radius={0.08} smoothness={3} position={[0, -1.45, 2.45]} castShadow receiveShadow>
+        <meshStandardMaterial color="#9b6747" roughness={0.82} />
+      </RoundedBox>
+      <RoundedBox args={[8.3, 0.24, 0.22]} radius={0.05} smoothness={3} position={[0, -1.66, 3.65]} castShadow>
+        <meshStandardMaterial color="#654331" roughness={0.88} />
+      </RoundedBox>
+      {[-3.15, 3.15].map((x) => (
+        <RoundedBox key={x} args={[0.28, 1.45, 0.28]} radius={0.04} smoothness={3} position={[x, -2.04, 2.45]} castShadow>
+          <meshStandardMaterial color="#754a35" roughness={0.88} />
+        </RoundedBox>
+      ))}
+      <RoundedBox args={[2.35, 1.4, 0.12]} radius={0.05} smoothness={3} position={[4.15, 2.25, -2.18]} castShadow>
+        <meshStandardMaterial color="#9b6747" roughness={0.88} />
+      </RoundedBox>
+      <RoundedBox args={[1.92, 0.96, 0.08]} radius={0.03} smoothness={3} position={[4.15, 2.25, -2.1]}>
+        <meshStandardMaterial color="#fffaf0" roughness={0.98} />
+      </RoundedBox>
+    </group>
+  );
+}
+
 function ShelfModel() {
   return (
     <group>
@@ -310,7 +341,7 @@ function ResponsiveCamera() {
   const { camera, size } = useThree();
 
   useEffect(() => {
-    camera.fov = size.width < 640 ? 54 : 31;
+    camera.fov = size.width < 640 ? 54 : 34;
     camera.updateProjectionMatrix();
   }, [camera, size.width]);
 
@@ -323,12 +354,12 @@ export function ThreeBookshelf({ books, selectedBookId, bookOpeningPhase, openin
       <Canvas
         shadows
         dpr={[1, 1.6]}
-        camera={{ position: [0, 1.05, 8.8], fov: 31 }}
+        camera={{ position: [0, 0.3, 8.8], fov: 34 }}
         gl={{ antialias: true, alpha: false }}
       >
         <ResponsiveCamera />
-        <color attach="background" args={['#d7c0aa']} />
-        <fog attach="fog" args={['#d7c0aa', 8, 16]} />
+        <color attach="background" args={['#f3e7d3']} />
+        <fog attach="fog" args={['#f3e7d3', 8, 16]} />
         <ambientLight intensity={1.35} />
         <directionalLight
           castShadow
@@ -345,6 +376,7 @@ export function ThreeBookshelf({ books, selectedBookId, bookOpeningPhase, openin
         <pointLight position={[3.2, 2.8, 3.8]} intensity={14} distance={12} color="#e9af7d" />
         <pointLight position={[-3.5, 0.2, 2]} intensity={8} distance={10} color="#9bb7bc" />
 
+        <RoomModel />
         <ShelfModel />
         {books.map((book, index) => (
           <BookModel
