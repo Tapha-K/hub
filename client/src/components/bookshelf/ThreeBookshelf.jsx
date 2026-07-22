@@ -343,7 +343,7 @@ export function ThreeBookshelf({ books, selectedBookId, bookOpeningPhase, openin
       <Canvas
         shadows
         dpr={[1, 1.25]}
-        camera={{ position: [0, 0.3, 8.8], fov: 34 }}
+        camera={{ position: [0, 0.3, 9.8], fov: 34 }}
         gl={{ antialias: true, alpha: false }}
       >
         <ResponsiveCamera />
