@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Archive, ArrowLeft, ArrowRight, Bookmark, BookOpen, Check, NotebookPen, Plus, RotateCcw } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -643,6 +643,10 @@ export default function App() {
   const [isBooksLoading, setIsBooksLoading] = useState(false);
   const [booksError, setBooksError] = useState('');
   const [selectedBookId, setSelectedBookId] = useState(null);
+  const [openingBookId, setOpeningBookId] = useState(null);
+  const [bookOpeningPhase, setBookOpeningPhase] = useState(null);
+  const [openingPageCount, setOpeningPageCount] = useState(0);
+  const openingTimerRef = useRef(null);
   const [bookDetail, setBookDetail] = useState(null);
   const [isBookDetailLoading, setIsBookDetailLoading] = useState(false);
   const [bookDetailError, setBookDetailError] = useState('');
@@ -653,6 +657,12 @@ export default function App() {
       window.history.replaceState({}, '', '/bookshelf');
     }
   }, [user]);
+
+  useEffect(() => {
+    return () => {
+      if (openingTimerRef.current) window.clearTimeout(openingTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (!selectedBookId || !user) return undefined;
@@ -715,15 +725,65 @@ export default function App() {
     setUser(newUser);
   }
 
-  function openBook(bookId, startInReadingContext = false) {
+  function openBook(bookId, startInReadingContext = false, bookOverride = null) {
+    if (openingTimerRef.current) window.clearTimeout(openingTimerRef.current);
+
+    const openingBook = bookOverride ?? [...books, ...completedBooks, ...archivedBooks].find((book) => book.id === bookId);
+    if (openingBook?.status !== 'READING') {
+      setShouldStartReading(false);
+      setSelectedBookId(bookId);
+      setOpeningBookId(null);
+      setBookOpeningPhase(null);
+      setOpeningPageCount(0);
+      return;
+    }
+    const recordCount = Number(openingBook?.recordCount ?? 0);
+    const pagesToTurn = openingBook?.status === 'COMPLETED' ? 5 : recordCount > 0 ? 3 : 0;
+
+    function zoomAndShowDetail() {
+      setBookOpeningPhase('zooming');
+      openingTimerRef.current = window.setTimeout(() => {
+        setSelectedBookId(bookId);
+        setOpeningBookId(null);
+        setBookOpeningPhase(null);
+        setOpeningPageCount(0);
+        openingTimerRef.current = null;
+      }, 520);
+    }
+
+    function turnNextPage(pageNumber) {
+      if (pageNumber > pagesToTurn) {
+        openingTimerRef.current = window.setTimeout(zoomAndShowDetail, 700);
+        return;
+      }
+
+      openingTimerRef.current = window.setTimeout(() => {
+        setOpeningPageCount(pageNumber);
+        turnNextPage(pageNumber + 1);
+      }, 700);
+    }
+
     setShouldStartReading(startInReadingContext);
-    setSelectedBookId(bookId);
+    setOpeningBookId(bookId);
+    setBookOpeningPhase('pulling');
+    setOpeningPageCount(0);
+    openingTimerRef.current = window.setTimeout(() => {
+      setBookOpeningPhase('turning');
+      openingTimerRef.current = window.setTimeout(() => {
+        setBookOpeningPhase('opening');
+        if (pagesToTurn > 0) {
+          turnNextPage(1);
+        } else {
+          openingTimerRef.current = window.setTimeout(zoomAndShowDetail, 700);
+        }
+      }, 520);
+    }, 420);
   }
 
   async function handleCreateBook(input) {
     const newBook = await createBook({ userId: user.id, ...input });
     setBooks((currentBooks) => [newBook, ...currentBooks]);
-    openBook(newBook.id);
+    openBook(newBook.id, false, newBook);
   }
 
   async function handleSaveRecord(bookId, recordInput) {
@@ -804,6 +864,8 @@ export default function App() {
           onBackToBookshelf={() => {
             setSelectedBookId(null);
             setShouldStartReading(false);
+            setBookOpeningPhase(null);
+            setOpeningPageCount(0);
           }}
           onSaveRecord={handleSaveRecord}
           onUpdateRecord={handleUpdateRecord}
@@ -816,6 +878,9 @@ export default function App() {
           books={books}
           completedBooks={completedBooks}
           archivedBooks={archivedBooks}
+          openingBookId={openingBookId}
+          bookOpeningPhase={bookOpeningPhase}
+          openingPageCount={openingPageCount}
           onAddBook={() => setIsAddBookOpen(true)}
           onSelectBook={handleSelectBook}
           onContinueReading={handleContinueReading}
