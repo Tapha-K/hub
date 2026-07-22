@@ -430,7 +430,9 @@ function BookStatusDialog({ book, mode, open, onOpenChange, onConfirm }) {
     ? '완독한 책은 완독 선반에 놓이고, 긴 서평은 지금 쓰지 않아도 괜찮아요.'
     : isArchive
       ? '기록과 마지막 책갈피는 그대로 남아요. 언제든 다시 꺼낼 수 있어요.'
-      : '마지막 책갈피를 유지한 채 읽고 있는 책장으로 돌아가요.';
+      : book?.status === 'COMPLETED'
+        ? '완독 서평과 마지막 책갈피를 유지한 채 읽고 있는 책장으로 돌아가요.'
+        : '마지막 책갈피를 유지한 채 읽고 있는 책장으로 돌아가요.';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -541,13 +543,11 @@ function BookDetailScreen({
                 완독으로 옮기기
               </Button>
             </div>
-          ) : book.status === 'ARCHIVED' ? (
+          ) : (
             <Button type="button" variant="outline" onClick={() => setStatusMode('resume')}>
               <RotateCcw aria-hidden="true" size={16} strokeWidth={1.8} />
               다시 읽는 중으로
             </Button>
-          ) : (
-            <span className="book-status__review-label">마지막 서평 페이지가 열려 있어요.</span>
           )}
         </section>
 

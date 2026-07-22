@@ -66,7 +66,7 @@ function StatusShelf({ title, kicker, books, emptyMessage, onSelectBook, onResto
                   {!isArchive && book.finalReview && <em>“{book.finalReview}”</em>}
                 </span>
               </button>
-              {isArchive && (
+              {onRestoreBook && (
                 <Button
                   className="status-shelf__restore"
                   type="button"
@@ -217,6 +217,8 @@ export function ReadingBookshelf({
                 books={completedBooks}
                 emptyMessage="완독한 책이 생기면 이 선반에 놓여요."
                 onSelectBook={onSelectBook}
+                onRestoreBook={handleRestoreBook}
+                restoringBookId={restoringBookId}
               />
               <StatusShelf
                 title="보관함"
