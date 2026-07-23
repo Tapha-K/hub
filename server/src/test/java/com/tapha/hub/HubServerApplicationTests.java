@@ -9,6 +9,12 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
+import org.springframework.boot.test.context.TestConfiguration;
+
+import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -20,12 +26,15 @@ import com.tapha.hub.user.domain.User;
 import com.tapha.hub.user.domain.UserRepository;
 import com.tapha.hub.book.domain.Book;
 import com.tapha.hub.book.domain.BookRepository;
+import com.tapha.hub.book.application.BookMetadata;
+import com.tapha.hub.book.application.BookMetadataClient;
 import com.tapha.hub.reading.domain.ReadingRecord;
 import com.tapha.hub.reading.domain.ReadingRecordRepository;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@Import(HubServerApplicationTests.TestBookMetadataConfig.class)
 class HubServerApplicationTests {
 
     @Autowired
@@ -39,6 +48,35 @@ class HubServerApplicationTests {
 
     @Autowired
     private ReadingRecordRepository readingRecordRepository;
+
+    @TestConfiguration
+    static class TestBookMetadataConfig {
+
+        @Bean
+        @Primary
+        BookMetadataClient bookMetadataClient() {
+            return new BookMetadataClient() {
+                @Override
+                public List<BookMetadata> search(String query) {
+                    return List.of(get("test-volume"), get("another-volume"));
+                }
+
+                @Override
+                public BookMetadata get(String providerId) {
+                    return new BookMetadata(
+                            "GOOGLE_BOOKS",
+                            providerId,
+                            "아주 작은 습관의 힘",
+                            null,
+                            null,
+                            "9780306406157",
+                            "2018",
+                            320
+                    );
+                }
+            };
+        }
+    }
 
 	@Test
 	void contextLoads() {
@@ -76,8 +114,7 @@ class HubServerApplicationTests {
                         .content("""
                                 {
                                   "userId": %d,
-                                  "title": " 아주 작은 습관의 힘 ",
-                                  "author": "   "
+                                  "providerId": "test-volume"
                                 }
                                 """.formatted(userId)))
                 .andExpect(status().isCreated())
@@ -89,11 +126,42 @@ class HubServerApplicationTests {
     }
 
     @Test
+    void searchesBooksByTitleAndReturnsEditionMetadata() throws Exception {
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .get("/api/books/search")
+                        .param("q", "아주 작은 습관의 힘"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.books.length()").value(1))
+                .andExpect(jsonPath("$.books[0].providerId").value("test-volume"))
+                .andExpect(jsonPath("$.books[0].isbn13").value("9780306406157"));
+    }
+
+    @Test
+    void preventsRegisteringSameEditionForSameUser() throws Exception {
+        Long userId = userRepository.save(new User("다정", Instant.now())).getId();
+
+        mockMvc.perform(post("/api/books")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "userId": %d, "providerId": "test-volume" }
+                                """.formatted(userId)))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(post("/api/books")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "userId": %d, "providerId": "another-volume" }
+                                """.formatted(userId)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("DUPLICATE_BOOK"));
+    }
+
+    @Test
     void rejectsUnknownBookOwner() throws Exception {
         mockMvc.perform(post("/api/books")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                { "userId": 999999, "title": "독서 기록" }
+                                { "userId": 999999, "providerId": "test-volume" }
                                 """))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("NOT_FOUND"));

@@ -43,6 +43,32 @@
 
 ## 책 등록
 
+### `GET /api/books/search?q={query}`
+
+책 이름으로 외부 도서 정보를 검색한다. 서버가 Google Books API를 호출하며 API 키는 클라이언트에 노출하지 않는다.
+
+응답 `200`:
+
+```json
+{
+  "books": [
+    {
+      "providerId": "volume-123",
+      "title": "아주 작은 습관의 힘",
+      "author": "제임스 클리어",
+      "isbn10": "0735211299",
+      "isbn13": "9780735211292",
+      "publishedDate": "2018",
+      "pageCount": 320
+    }
+  ]
+}
+```
+
+- 검색 결과는 제목, 저자, 출판일, ISBN으로 판본을 구분해 표시한다.
+- 같은 ISBN을 가진 API 결과는 한 결과로 합친다.
+- ISBN이 다른 판본은 별도 결과로 표시한다.
+
 ### `POST /api/books`
 
 요청:
@@ -50,17 +76,19 @@
 ```json
 {
   "userId": "user-123",
-  "title": "아주 작은 습관의 힘",
-  "author": "제임스 클리어",
+  "providerId": "volume-123",
   "initialPage": 1
 }
 ```
 
-- `title`은 공백 제거 후 필수다.
-- `author`는 선택이며 빈 문자열은 `null`로 정리한다.
+- `providerId`는 검색 결과에서 선택한 Google Books volume ID다.
 - `initialPage`는 생략하면 `1`이며, 1 이상의 정수여야 한다.
+- 서버는 선택한 volume을 다시 조회해 제목·저자·ISBN을 저장한다.
+- 같은 사용자가 같은 판본을 다시 등록하면 `409 DUPLICATE_BOOK`을 반환한다.
+- 판본 식별 키는 유효한 ISBN-13, ISBN-10을 변환한 ISBN-13, ISBN이 없으면 provider ID 순서로 정한다.
 
 응답은 아래 책 상세 응답과 같은 구조를 `201`로 반환한다.
+- 응답에는 `metadataProvider`, `metadataProviderId`, `isbn10`, `isbn13`이 포함된다.
 
 ## 사용자 책장 조회
 

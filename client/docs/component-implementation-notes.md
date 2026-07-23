@@ -281,30 +281,31 @@ isEmptyBookshelf
 
 #### 책임
 
-- 새 책을 최소 입력으로 등록하고 책 상세로 이동한다.
+- 책 이름으로 검색한 결과에서 판본을 선택해 새 책을 등록하고 책 상세로 이동한다.
 
 #### 주요 상태
 
-- `bookDraft.title`
-- `bookDraft.author`
+- `bookDraft.query`
+- `bookDraft.providerId`
+- `searchResults`
 - `bookDraft.initialPage`
 - `validationErrors`
 - `isSubmitting`
 
 #### 주요 핸들러
 
-- `onChangeTitle`
-- `onChangeAuthor`
+- `onSearchBooks`
+- `onSelectBook`
 - `onChangeInitialPage`
 - `onSubmit`
 - `onCancel`
 
 #### 검증과 사용자 안내
 
-- 제목은 공백 제거 후 1자 이상이다.
-- 저자는 비워 둘 수 있다.
+- 책 이름은 공백 제거 후 1자 이상이다.
+- 검색 결과에서 판본을 하나 선택해야 한다.
 - 시작 페이지 기본값은 1이며, 이미 읽던 책을 등록하는 경우 변경할 수 있다.
-- 저장 실패 시 입력값을 유지한다.
+- 검색·저장 실패 시 입력값을 유지한다.
 
 ## 책 상세와 세션 기록
 
@@ -522,6 +523,7 @@ isEmptyBookshelf
 P0의 API client는 화면 컴포넌트에서 분리한다.
 
 ```text
+searchBooks(query)
 createUser(input)
 createBook(userId, input)
 getBooks(userId, status)
