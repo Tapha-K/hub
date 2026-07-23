@@ -168,6 +168,28 @@ class HubServerApplicationTests {
     }
 
     @Test
+    void savesOptionalReadingDurationAndRejectsNegativeDuration() throws Exception {
+        Long userId = userRepository.save(new User("다정", Instant.now())).getId();
+        Long bookId = bookRepository.save(new Book(userId, "시간 기록", null, 1, Instant.now())).getId();
+
+        mockMvc.perform(post("/api/books/{bookId}/records", bookId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "userId": %d, "endPage": 12, "readingDurationSeconds": 930 }
+                                """.formatted(userId)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.record.readingDurationSeconds").value(930));
+
+        mockMvc.perform(post("/api/books/{bookId}/records", bookId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "userId": %d, "endPage": 13, "readingDurationSeconds": -1 }
+                                """.formatted(userId)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+    }
+
+    @Test
     void completesAndResumesBookWithoutLosingReviewOrBookmark() throws Exception {
         Long userId = userRepository.save(new User("다정", Instant.now())).getId();
         Long bookId = bookRepository.save(new Book(userId, "독서 기록", null, 20, Instant.now())).getId();
@@ -285,10 +307,10 @@ class HubServerApplicationTests {
         Long userId = userRepository.save(new User("다정", Instant.now())).getId();
         Long bookId = bookRepository.save(new Book(userId, "기록을 고치는 책", null, 10, Instant.now())).getId();
         readingRecordRepository.save(new ReadingRecord(
-                bookId, userId, 10, 20, "처음 감상", Instant.parse("2026-07-01T00:00:00Z")
+                bookId, userId, 10, 20, "처음 감상", null, Instant.parse("2026-07-01T00:00:00Z")
         ));
         ReadingRecord latest = readingRecordRepository.save(new ReadingRecord(
-                bookId, userId, 21, 30, "두 번째 감상", Instant.parse("2026-07-02T00:00:00Z")
+                bookId, userId, 21, 30, "두 번째 감상", null, Instant.parse("2026-07-02T00:00:00Z")
         ));
 
         mockMvc.perform(patch("/api/books/{bookId}/records/{recordId}", bookId, latest.getId())
@@ -321,10 +343,10 @@ class HubServerApplicationTests {
         Long userId = userRepository.save(new User("다정", Instant.now())).getId();
         Long bookId = bookRepository.save(new Book(userId, "기록을 지우는 책", null, 10, Instant.now())).getId();
         ReadingRecord previous = readingRecordRepository.save(new ReadingRecord(
-                bookId, userId, 10, 20, "남는 감상", Instant.parse("2026-07-01T00:00:00Z")
+                bookId, userId, 10, 20, "남는 감상", null, Instant.parse("2026-07-01T00:00:00Z")
         ));
         ReadingRecord latest = readingRecordRepository.save(new ReadingRecord(
-                bookId, userId, 21, 30, "지울 감상", Instant.parse("2026-07-02T00:00:00Z")
+                bookId, userId, 21, 30, "지울 감상", null, Instant.parse("2026-07-02T00:00:00Z")
         ));
 
         mockMvc.perform(delete("/api/books/{bookId}/records/{recordId}", bookId, latest.getId())
@@ -347,10 +369,10 @@ class HubServerApplicationTests {
         Long otherUserId = userRepository.save(new User("서연", Instant.now())).getId();
         Long bookId = bookRepository.save(new Book(ownerId, "기록 권한", null, 1, Instant.now())).getId();
         ReadingRecord older = readingRecordRepository.save(new ReadingRecord(
-                bookId, ownerId, 1, 10, null, Instant.parse("2026-07-01T00:00:00Z")
+                bookId, ownerId, 1, 10, null, null, Instant.parse("2026-07-01T00:00:00Z")
         ));
         ReadingRecord latest = readingRecordRepository.save(new ReadingRecord(
-                bookId, ownerId, 11, 20, null, Instant.parse("2026-07-02T00:00:00Z")
+                bookId, ownerId, 11, 20, null, null, Instant.parse("2026-07-02T00:00:00Z")
         ));
 
         mockMvc.perform(patch("/api/books/{bookId}/records/{recordId}", bookId, older.getId())

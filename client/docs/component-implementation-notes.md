@@ -472,8 +472,10 @@ isEmptyBookshelf
 ### TimerPanel
 
 - 타이머는 `StartReadingPanel`의 보조 기능이다.
-- 상태는 `durationMinutes`, `startedAt`, `remainingSeconds` 같은 일시 UI 상태로만 둔다.
-- 타이머 종료나 중단은 기록 저장 가능 여부를 바꾸지 않는다.
+- 활성 상태는 같은 탭의 새로고침 복구를 위해 `sessionStorage`에만 둔다.
+- 일시정지하면 실제 경과 시간과 목표 시간 모두 멈추고, 재개하면 같은 세션에서 이어서 측정한다.
+- 선택 시간 뒤에는 알림이나 자동 종료 없이 경과 시간을 계속 보여 준다.
+- 사용자가 세션을 종료하면 실제 경과 초를 새 세션 기록에 선택적으로 저장한다.
 
 ### CompletionReviewDialog / FinalReviewPage
 

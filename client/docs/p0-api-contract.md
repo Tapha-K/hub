@@ -149,7 +149,8 @@
 {
   "userId": "user-123",
   "endPage": 74,
-  "impression": "한 줄이면 충분해요."
+  "impression": "한 줄이면 충분해요.",
+  "readingDurationSeconds": 930
 }
 ```
 
@@ -168,6 +169,7 @@
 - `startPageOverride`는 예외에서만 허용하고, 이전 기록과의 연속성은 강제하지 않는다.
 - `endPage`는 1 이상의 정수이며 확정된 시작 페이지보다 작을 수 없다.
 - 감상은 선택이다.
+- `readingDurationSeconds`는 선택적 타이머 세션을 끝낸 경우의 실제 경과 초다. 타이머를 사용하지 않으면 생략하며, 음수는 허용하지 않는다.
 
 응답 `201`:
 
@@ -178,6 +180,7 @@
     "startPage": 75,
     "endPage": 91,
     "impression": null,
+    "readingDurationSeconds": 930,
     "createdAt": "2026-07-14T10:00:00Z"
   },
   "nextStartPage": 92

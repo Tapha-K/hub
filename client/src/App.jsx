@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { ReadingBookshelf } from '@/components/bookshelf/ReadingBookshelf';
 import { ReadingRecordList } from '@/components/bookshelf/ReadingRecordList';
 import { SessionRecordDialog } from '@/components/bookshelf/SessionRecordDialog';
+import { TimerPanel } from '@/components/bookshelf/TimerPanel';
 import {
   getLatestRecord,
   getNextStartPage,
@@ -474,6 +475,7 @@ function BookStatusDialog({ book, mode, open, onOpenChange, onConfirm }) {
 
 function BookDetailScreen({
   book,
+  userId,
   startInReadingContext,
   onBackToBookshelf,
   onSaveRecord,
@@ -486,6 +488,7 @@ function BookDetailScreen({
   const [editingRecord, setEditingRecord] = useState(null);
   const [deletingRecord, setDeletingRecord] = useState(null);
   const [statusMode, setStatusMode] = useState(null);
+  const [pendingDurationSeconds, setPendingDurationSeconds] = useState(null);
   const records = getRecords(book);
   const latestRecord = getLatestRecord(book);
   const nextStartPage = getNextStartPage(book);
@@ -566,6 +569,14 @@ function BookDetailScreen({
             {isReadingContextActive ? (
               <>
                 <p>다 읽고 돌아오면 기록을 남겨 주세요. 타이머 없이도 기록할 수 있어요.</p>
+                <TimerPanel
+                  userId={userId}
+                  bookId={book.id}
+                  onEndSession={(durationSeconds) => {
+                    setPendingDurationSeconds(durationSeconds);
+                    setIsRecordDialogOpen(true);
+                  }}
+                />
                 <Button type="button" onClick={() => setIsRecordDialogOpen(true)}>이번 읽기 기록 남기기</Button>
               </>
             ) : (
@@ -596,13 +607,15 @@ function BookDetailScreen({
           if (!nextOpen) {
             setIsRecordDialogOpen(false);
             setEditingRecord(null);
+            setPendingDurationSeconds(null);
           }
         }}
         onSave={async (record) => {
           if (editingRecord) {
             await onUpdateRecord(book.id, editingRecord.record.id, record);
           } else {
-            await onSaveRecord(book.id, record);
+            await onSaveRecord(book.id, { ...record, readingDurationSeconds: pendingDurationSeconds });
+            setPendingDurationSeconds(null);
             setIsReadingContextActive(false);
           }
         }}
@@ -860,6 +873,7 @@ export default function App() {
         <BookDetailScreen
           key={`${bookDetail.id}-${shouldStartReading}`}
           book={bookDetail}
+          userId={user.id}
           startInReadingContext={shouldStartReading}
           onBackToBookshelf={() => {
             setSelectedBookId(null);

@@ -54,10 +54,10 @@ export function getBook(bookId, userId) {
   return request(`/api/books/${bookId}?userId=${encodeURIComponent(userId)}`);
 }
 
-export function createReadingRecord({ bookId, userId, endPage, startPageOverride, impression }) {
+export function createReadingRecord({ bookId, userId, endPage, startPageOverride, impression, readingDurationSeconds }) {
   return request(`/api/books/${bookId}/records`, {
     method: 'POST',
-    body: JSON.stringify({ userId, endPage, startPageOverride: startPageOverride || null, impression: impression || null }),
+    body: JSON.stringify({ userId, endPage, startPageOverride: startPageOverride || null, impression: impression || null, readingDurationSeconds: readingDurationSeconds ?? null }),
   });
 }
 
