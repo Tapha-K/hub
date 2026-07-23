@@ -9,6 +9,7 @@ const firstRecord = {
   startPage: 10,
   endPage: 25,
   impression: '첫 감상',
+  readingDurationSeconds: 930,
 };
 const latestRecord = {
   id: 2,
@@ -49,6 +50,7 @@ describe('ReadingRecordList', () => {
 
     expect(screen.getByText('2025년 1월 15일')).toBeInTheDocument();
     expect(screen.getByText('10–25쪽 · 16쪽 읽음')).toBeInTheDocument();
+    expect(screen.getByText('15분 30초 함께 읽음')).toBeInTheDocument();
     expect(screen.getByText('첫 감상')).toBeInTheDocument();
   });
 
