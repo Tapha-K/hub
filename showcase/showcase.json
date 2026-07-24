@@ -22,8 +22,7 @@
   "featureTags": [
     "개인 책장",
     "마지막 책갈피",
-    "독서 기록",
-    "도서 검색"
+    "독서 기록"
   ],
   "techStack": [
     "React",
@@ -36,8 +35,7 @@
   ],
   "techHighlights": [
     "React 화면의 모든 서버 요청을 공통 API 모듈로 연결하고 저장 후 서버 데이터를 다시 조회합니다.",
-    "Spring Boot와 Spring Data JPA로 사용자, 책, 독서 기록 API를 구현하고 MySQL에 저장합니다.",
-    "Flyway 마이그레이션으로 데이터베이스 변경 이력을 관리합니다.",
+    "Spring Boot와 Spring Data JPA로 API를 구현하고 MySQL 데이터 변경 이력을 Flyway로 관리합니다.",
     "Google Books API는 서버에서만 호출해 API 키가 브라우저에 노출되지 않게 했습니다."
   ],
   "developmentWithAI": "저는 독서를 다시 시작하게 한다는 문제와 핵심 기능, 우선순위를 정했습니다. AI는 저장소의 기존 문서와 코드를 읽고 요구사항을 작은 수직 흐름으로 나눠 구현과 테스트 초안을 만들었습니다. 저는 diff, 테스트, 빌드와 실제 사용자 흐름을 확인하며 결과를 수정하고 제품 결정을 문서에 남겼습니다.",
