@@ -116,6 +116,7 @@ flowchart LR
 
 ## 구현 문서
 
+- [Local QA and Demo Runbook](docs/local-qa-and-demo.md): Google 로그인부터 글귀 기반 독서 재개까지 로컬 실행, 통합 QA와 1분 시연 절차를 정리합니다.
 - [AI Collaboration Workflow](AI_WORKFLOW.md): 3주간의 작업 순서, 사용한 Skill·Agent 역할, 발표 진행안을 정리합니다.
 - [Product PRD](client/docs/product-prd.md): Wiki P0/P1 범위를 PC 웹 MVP 요구사항으로 구체화합니다.
 - [Frontend User Flow](client/docs/user-flow.md): MVP 화면 단계와 사용자 흐름을 정리합니다.
