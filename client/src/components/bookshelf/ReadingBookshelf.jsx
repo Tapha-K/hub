@@ -39,6 +39,21 @@ function ContinueReadingCard({ book, onContinueReading }) {
   );
 }
 
+function QuoteBanner({ quote, book, onOpen }) {
+  if (!quote || !book) return null;
+  return (
+    <aside className="quote-banner" aria-labelledby="quote-banner-title">
+      <p className="section-kicker">A LINE TO RETURN TO</p>
+      <blockquote id="quote-banner-title">“{quote.text}”</blockquote>
+      <button type="button" onClick={onOpen}>
+        <span>{book.title}</span>
+        다시 펼치기
+        <ArrowRight aria-hidden="true" size={16} strokeWidth={1.8} />
+      </button>
+    </aside>
+  );
+}
+
 function StatusShelf({ title, kicker, books, emptyMessage, onSelectBook, onRestoreBook, restoringBookId, isArchive = false }) {
   return (
     <section className={`status-shelf status-shelf--${isArchive ? 'archive' : 'completed'}`} aria-labelledby={`${kicker.toLowerCase()}-shelf-title`}>
@@ -99,12 +114,15 @@ export function ReadingBookshelf({
   onSelectBook,
   onContinueReading,
   onRestoreBook,
+  quote,
+  onOpenQuote,
 }) {
   const continueBook = getContinueBook(books);
   const [hoveredBookId, setHoveredBookId] = useState(null);
   const [restoringBookId, setRestoringBookId] = useState(null);
   const [restoreError, setRestoreError] = useState('');
   const openingBook = books.find((book) => book.id === openingBookId);
+  const quoteBook = books.find((book) => book.id === quote?.bookId);
   const targetPageCount = openingBook?.status === 'COMPLETED'
     ? 5
     : Number(openingBook?.recordCount ?? 0) > 0
@@ -186,6 +204,7 @@ export function ReadingBookshelf({
           </div>
 
           <aside className="bookshelf-details">
+            <QuoteBanner quote={quote} book={quoteBook} onOpen={onOpenQuote} />
             <div className="reading-bookshelf__heading">
               <div>
                 <p className="section-kicker">NOW READING</p>
