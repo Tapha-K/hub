@@ -818,7 +818,7 @@ export default function App() {
   }, [user]);
 
   useEffect(() => {
-    if (!quote || selectedBookId) {
+    if (!quote || selectedBookId || isBooksLoading || !books.some((book) => book.id === quote.bookId)) {
       setQuoteExposure(null);
       return undefined;
     }
@@ -831,7 +831,7 @@ export default function App() {
     return () => {
       isCancelled = true;
     };
-  }, [quote, selectedBookId]);
+  }, [quote, selectedBookId, isBooksLoading, books]);
 
   function handleOnboardingComplete(newUser) {
     window.history.pushState({}, '', '/bookshelf');
