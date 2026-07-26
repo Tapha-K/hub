@@ -21,6 +21,7 @@ import {
   getNextStartPage,
   getRecords,
 } from '@/lib/reading';
+import { prefersReducedMotion } from '@/lib/motion';
 import {
   createBook,
   createQuoteExposure,
@@ -839,11 +840,22 @@ export default function App() {
   }
 
   function openBook(bookId, startInReadingContext = false, bookOverride = null) {
-    if (openingTimerRef.current) window.clearTimeout(openingTimerRef.current);
+    if (openingTimerRef.current) {
+      window.clearTimeout(openingTimerRef.current);
+      openingTimerRef.current = null;
+    }
 
     const openingBook = bookOverride ?? [...books, ...completedBooks, ...archivedBooks].find((book) => book.id === bookId);
     if (openingBook?.status !== 'READING') {
       setShouldStartReading(false);
+      setSelectedBookId(bookId);
+      setOpeningBookId(null);
+      setBookOpeningPhase(null);
+      setOpeningPageCount(0);
+      return;
+    }
+    if (prefersReducedMotion()) {
+      setShouldStartReading(startInReadingContext);
       setSelectedBookId(bookId);
       setOpeningBookId(null);
       setBookOpeningPhase(null);
