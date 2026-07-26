@@ -1,5 +1,6 @@
 package com.tapha.hub.reading.domain;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -10,5 +11,10 @@ public interface ReadingRecordRepository extends JpaRepository<ReadingRecord, Lo
     List<ReadingRecord> findByBookIdInOrderByCreatedAtAscIdAsc(List<Long> bookIds);
     Optional<ReadingRecord> findTopByBookIdOrderByCreatedAtDescIdDesc(Long bookId);
     Optional<ReadingRecord> findByIdAndBookIdAndUserId(Long id, Long bookId, Long userId);
+    List<ReadingRecord> findByUserIdAndCreatedAtGreaterThanEqualAndCreatedAtBefore(
+            Long userId,
+            Instant from,
+            Instant to
+    );
     long countByBookId(Long bookId);
 }

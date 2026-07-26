@@ -1,6 +1,11 @@
 package com.tapha.hub.reading.application;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,6 +19,7 @@ import com.tapha.hub.reading.domain.ReadingRecordRepository;
 import com.tapha.hub.reading.presentation.CreateReadingRecordRequest;
 import com.tapha.hub.reading.presentation.CreateReadingRecordResponse;
 import com.tapha.hub.reading.presentation.DeleteReadingRecordResponse;
+import com.tapha.hub.reading.presentation.ReadingActivityResponse;
 import com.tapha.hub.reading.presentation.ReadingRecordSummary;
 import com.tapha.hub.reading.presentation.UpdateReadingRecordRequest;
 import com.tapha.hub.quote.domain.Quote;
@@ -23,6 +29,9 @@ import com.tapha.hub.quote.domain.QuoteRepository;
 
 @Service
 public class ReadingRecordService {
+    private static final ZoneId ACTIVITY_ZONE = ZoneId.of("Asia/Seoul");
+    private static final long MAX_ACTIVITY_DAYS = 84;
+
     private final BookRepository bookRepository;
     private final ReadingRecordRepository recordRepository;
     private final QuoteRepository quoteRepository;
@@ -95,6 +104,36 @@ public class ReadingRecordService {
         recordRepository.delete(record);
         recordRepository.flush();
         return new DeleteReadingRecordResponse(getNextStartPage(bookId, book));
+    }
+
+    @Transactional(readOnly = true)
+    public ReadingActivityResponse getActivity(Long userId, LocalDate from, LocalDate to) {
+        long days = ChronoUnit.DAYS.between(from, to) + 1;
+        if (days < 1 || days > MAX_ACTIVITY_DAYS) {
+            throw new InvalidRequestException(
+                    "INVALID_DATE_RANGE",
+                    "조회 기간은 시작일이 종료일보다 늦지 않은 최대 84일이어야 해요."
+            );
+        }
+
+        Instant fromInstant = from.atStartOfDay(ACTIVITY_ZONE).toInstant();
+        Instant toExclusive = to.plusDays(1).atStartOfDay(ACTIVITY_ZONE).toInstant();
+        var countsByDate = recordRepository
+                .findByUserIdAndCreatedAtGreaterThanEqualAndCreatedAtBefore(userId, fromInstant, toExclusive)
+                .stream()
+                .collect(Collectors.groupingBy(
+                        record -> record.getCreatedAt().atZone(ACTIVITY_ZONE).toLocalDate(),
+                        TreeMap::new,
+                        Collectors.counting()
+                ));
+
+        return new ReadingActivityResponse(
+                from,
+                to,
+                countsByDate.entrySet().stream()
+                        .map(entry -> new ReadingActivityResponse.Day(entry.getKey(), entry.getValue()))
+                        .toList()
+        );
     }
 
     private ReadingRecord findLatestRecord(Long bookId, Long recordId, Long userId) {
