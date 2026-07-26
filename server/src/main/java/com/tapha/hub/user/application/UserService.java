@@ -21,15 +21,14 @@ public class UserService {
 
     @Transactional
     public UserResponse login(GoogleIdentity identity) {
+        String nickname = normalizeNickname(identity.name(), identity.email());
         User user = userRepository.findByProviderAndProviderSubject("GOOGLE", identity.subject())
-                .orElseGet(() -> userRepository.save(new User(
-                        normalizeNickname(identity.name(), identity.email()),
-                        "GOOGLE",
-                        identity.subject(),
-                        identity.email(),
-                        Instant.now()
-                )));
-        user.updateGoogleProfile(normalizeNickname(identity.name(), identity.email()), identity.email());
+                .orElseGet(() -> {
+                    userRepository.insertGoogleUser(nickname, identity.subject(), identity.email(), Instant.now());
+                    return userRepository.findByProviderAndProviderSubject("GOOGLE", identity.subject())
+                            .orElseThrow();
+                });
+        user.updateGoogleProfile(nickname, identity.email());
         return UserResponse.from(user);
     }
 

@@ -27,6 +27,7 @@ import tools.jackson.databind.ObjectMapper;
 import com.tapha.hub.auth.application.GoogleIdentity;
 import com.tapha.hub.auth.application.GoogleIdentityVerifier;
 import com.tapha.hub.auth.presentation.InvalidGoogleCredentialException;
+import com.tapha.hub.user.domain.UserRepository;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -39,6 +40,9 @@ class AuthApiTests {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @TestConfiguration
     static class TestGoogleIdentityConfig {
@@ -61,6 +65,8 @@ class AuthApiTests {
     @Test
     void logsInWithGoogleIdentityAndRestoresSession() throws Exception {
         MvcResult login = login();
+        Map<?, ?> firstBody = objectMapper.readValue(login.getResponse().getContentAsString(), Map.class);
+        Long firstUserId = ((Number) ((Map<?, ?>) firstBody.get("user")).get("id")).longValue();
         MockHttpSession session = (MockHttpSession) login.getRequest().getSession(false);
 
         mockMvc.perform(get("/api/auth/session").session(session))
@@ -68,6 +74,12 @@ class AuthApiTests {
                 .andExpect(jsonPath("$.user.nickname").value("다정"))
                 .andExpect(jsonPath("$.user.email").value("reader@example.com"))
                 .andExpect(jsonPath("$.csrfToken").isNotEmpty());
+
+        MvcResult secondLogin = login();
+        Map<?, ?> secondBody = objectMapper.readValue(secondLogin.getResponse().getContentAsString(), Map.class);
+        Long secondUserId = ((Number) ((Map<?, ?>) secondBody.get("user")).get("id")).longValue();
+        org.assertj.core.api.Assertions.assertThat(secondUserId).isEqualTo(firstUserId);
+        org.assertj.core.api.Assertions.assertThat(userRepository.count()).isEqualTo(1);
     }
 
     @Test
