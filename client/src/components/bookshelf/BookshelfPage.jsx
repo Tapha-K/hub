@@ -4,6 +4,7 @@ import { BookOpen, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AddBookDialog } from '@/components/bookshelf/AddBookDialog';
 import { BookDetailScreen } from '@/components/bookshelf/BookDetailScreen';
+import { getReadingActivityRange } from '@/components/bookshelf/ReadingActivityCalendar';
 import { ReadingBookshelf } from '@/components/bookshelf/ReadingBookshelf';
 import { prefersReducedMotion } from '@/lib/motion';
 import {
@@ -14,6 +15,7 @@ import {
   getBook,
   getBooks,
   getRandomQuote,
+  getReadingActivity,
   openQuoteExposure,
   updateBookStatus,
   updateReadingRecord,
@@ -69,6 +71,10 @@ export function BookshelfPage({ user }) {
   const [quote, setQuote] = useState(null);
   const [quoteExposure, setQuoteExposure] = useState(null);
   const [activeQuoteExposureId, setActiveQuoteExposureId] = useState(null);
+  const [readingActivity, setReadingActivity] = useState(null);
+  const [isReadingActivityLoading, setIsReadingActivityLoading] = useState(true);
+  const [readingActivityError, setReadingActivityError] = useState('');
+  const [readingActivityRequest, setReadingActivityRequest] = useState(0);
 
   useEffect(() => {
     return () => {
@@ -126,6 +132,26 @@ export function BookshelfPage({ user }) {
       isCancelled = true;
     };
   }, [user]);
+
+  useEffect(() => {
+    if (!user) return undefined;
+    let isCancelled = false;
+    setIsReadingActivityLoading(true);
+    setReadingActivityError('');
+    getReadingActivity(getReadingActivityRange())
+      .then((activity) => {
+        if (!isCancelled) setReadingActivity(activity);
+      })
+      .catch((requestError) => {
+        if (!isCancelled) setReadingActivityError(requestError.message);
+      })
+      .finally(() => {
+        if (!isCancelled) setIsReadingActivityLoading(false);
+      });
+    return () => {
+      isCancelled = true;
+    };
+  }, [user, readingActivityRequest]);
 
   useEffect(() => {
     if (!user) return undefined;
@@ -232,6 +258,7 @@ export function BookshelfPage({ user }) {
     await createReadingRecord({ bookId, ...recordInput });
     if (recordInput.quoteExposureId) setActiveQuoteExposureId(null);
     await refreshBookData(bookId);
+    setReadingActivityRequest((request) => request + 1);
   }
 
   async function refreshShelves() {
@@ -267,6 +294,7 @@ export function BookshelfPage({ user }) {
   async function handleDeleteRecord(bookId, recordId) {
     await deleteReadingRecord({ bookId, recordId });
     await refreshBookData(bookId);
+    setReadingActivityRequest((request) => request + 1);
   }
 
   function handleSelectBook(bookId) {
@@ -333,6 +361,10 @@ export function BookshelfPage({ user }) {
           onRestoreBook={handleRestoreBook}
           quote={quote}
           onOpenQuote={handleOpenQuote}
+          readingActivity={readingActivity}
+          isReadingActivityLoading={isReadingActivityLoading}
+          readingActivityError={readingActivityError}
+          onRetryReadingActivity={() => setReadingActivityRequest((request) => request + 1)}
         />
       ) : (
         <EmptyBookshelf user={user} onAddBook={() => setIsAddBookOpen(true)} />

@@ -23,6 +23,17 @@ test('uses the login session and csrf token without sending a client user id', a
   expect(JSON.parse(options.body)).toEqual({ providerId: 'volume-1', initialPage: 1 });
 });
 
+test('requests reading activity for the selected date range', async () => {
+  fetch.mockResolvedValueOnce(response({ from: '2026-05-11', to: '2026-08-02', days: [] }));
+
+  const { getReadingActivity } = await import('./api');
+  await getReadingActivity({ from: '2026-05-11', to: '2026-08-02' });
+
+  expect(fetch.mock.calls[0][0]).toBe(
+    'http://localhost:8080/api/reading-activity?from=2026-05-11&to=2026-08-02',
+  );
+});
+
 function response(body) {
   return {
     ok: true,

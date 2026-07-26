@@ -59,6 +59,10 @@ export function getBooks() {
   return request('/api/bookshelf');
 }
 
+export function getReadingActivity({ from, to }) {
+  return request(`/api/reading-activity?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`);
+}
+
 export function searchBooks(query) {
   return request(`/api/books/search?q=${encodeURIComponent(query.trim())}`);
 }

@@ -2,6 +2,7 @@ import { lazy, Suspense, useState } from 'react';
 import { ArrowRight, BookOpen, Plus } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { ReadingActivityCalendar } from '@/components/bookshelf/ReadingActivityCalendar';
 import { getContinueBook, getLatestRecord, getNextStartPage } from '@/lib/reading';
 
 const ThreeBookshelf = lazy(() => import('@/components/bookshelf/ThreeBookshelf').then((module) => ({
@@ -116,6 +117,10 @@ export function ReadingBookshelf({
   onRestoreBook,
   quote,
   onOpenQuote,
+  readingActivity,
+  isReadingActivityLoading,
+  readingActivityError,
+  onRetryReadingActivity,
 }) {
   const continueBook = getContinueBook(books);
   const [hoveredBookId, setHoveredBookId] = useState(null);
@@ -228,6 +233,13 @@ export function ReadingBookshelf({
                 <Button type="button" onClick={onAddBook}>읽고 있는 책 추가</Button>
               </div>
             )}
+
+            <ReadingActivityCalendar
+              activity={readingActivity}
+              isLoading={isReadingActivityLoading}
+              error={readingActivityError}
+              onRetry={onRetryReadingActivity}
+            />
 
             <div className="status-shelves" aria-label="완독 및 보관 책장">
               <StatusShelf
