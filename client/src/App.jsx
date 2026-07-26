@@ -23,57 +23,67 @@ import {
 } from '@/lib/reading';
 import {
   createBook,
+  createQuoteExposure,
   createReadingRecord,
-  createUser,
   deleteReadingRecord,
   getBook,
   getBooks,
+  getRandomQuote,
+  getSession,
+  loginWithGoogle,
+  openQuoteExposure,
   searchBooks,
   updateBookStatus,
   updateReadingRecord,
 } from '@/lib/api';
 
-const USER_STORAGE_KEY = 'itjang:user';
+function GoogleLoginButton({ onCredential }) {
+  const buttonRef = useRef(null);
+  const onCredentialRef = useRef(onCredential);
+  onCredentialRef.current = onCredential;
 
-function readStoredUser() {
-  try {
-    const storedUser = window.localStorage.getItem(USER_STORAGE_KEY);
-    const user = storedUser ? JSON.parse(storedUser) : null;
+  useEffect(() => {
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    if (!clientId) return undefined;
 
-    // 이전 mock UI가 남긴 문자열 userId로 서버 API를 호출하지 않는다.
-    if (!user || !Number.isInteger(user.id) || user.id < 1) {
-      window.localStorage.removeItem(USER_STORAGE_KEY);
-      return null;
+    function initialize() {
+      if (!window.google || !buttonRef.current) return;
+      window.google.accounts.id.initialize({
+        client_id: clientId,
+        callback: ({ credential }) => onCredentialRef.current(credential),
+      });
+      window.google.accounts.id.renderButton(buttonRef.current, {
+        type: 'standard',
+        theme: 'outline',
+        size: 'large',
+        text: 'continue_with',
+        shape: 'rectangular',
+        width: 320,
+      });
     }
 
-    return user;
-  } catch {
-    window.localStorage.removeItem(USER_STORAGE_KEY);
-    return null;
+    const script = document.querySelector('script[src*="accounts.google.com/gsi/client"]');
+    initialize();
+    script?.addEventListener('load', initialize);
+    return () => script?.removeEventListener('load', initialize);
+  }, []);
+
+  if (!import.meta.env.VITE_GOOGLE_CLIENT_ID) {
+    return <p className="field-error" role="alert">Google 로그인 설정이 필요해요.</p>;
   }
+  return <div className="google-login-button" ref={buttonRef} />;
 }
 
 function OnboardingPage({ onComplete }) {
-  const nicknameId = useId();
-  const errorId = useId();
-  const [nickname, setNickname] = useState('');
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
-  async function handleSubmit(event) {
-    event.preventDefault();
-    const trimmedNickname = nickname.trim();
-
-    if (!trimmedNickname) {
-      setError('책장에 표시할 이름을 입력해 주세요.');
-      return;
-    }
-
+  async function handleCredential(credential) {
     setError('');
     setIsSaving(true);
 
     try {
-      const user = await createUser({ nickname: trimmedNickname });
+      const user = await loginWithGoogle(credential);
       onComplete(user);
     } catch (requestError) {
       setError(requestError.message);
@@ -106,37 +116,11 @@ function OnboardingPage({ onComplete }) {
           </p>
         </div>
 
-        <form className="onboarding-form" onSubmit={handleSubmit} noValidate>
-          <div className="field-group">
-            <Label htmlFor={nicknameId}>잇장에 표시할 이름</Label>
-            <Input
-              id={nicknameId}
-              name="nickname"
-              value={nickname}
-              onChange={(event) => {
-                setNickname(event.target.value);
-                if (error) setError('');
-              }}
-              placeholder="예: 다정"
-              autoComplete="nickname"
-              autoFocus
-              aria-invalid={Boolean(error)}
-              aria-describedby={error ? errorId : undefined}
-            />
-            {error ? (
-              <p className="field-error" id={errorId} role="alert">
-                {error}
-              </p>
-            ) : (
-              <p className="field-help">이 이름은 내 책장에만 표시돼요.</p>
-            )}
-          </div>
-
-          <Button className="onboarding-submit" type="submit" size="lg" disabled={isSaving}>
-            {isSaving ? '잇장을 만드는 중이에요…' : '내 잇장 시작하기'}
-            {!isSaving && <ArrowRight aria-hidden="true" size={18} strokeWidth={1.8} />}
-          </Button>
-        </form>
+        <div className="onboarding-form">
+          <p className="field-help">Google 계정으로 내 책장과 글귀를 안전하게 이어가요.</p>
+          {isSaving ? <p>잇장을 여는 중이에요…</p> : <GoogleLoginButton onCredential={handleCredential} />}
+          {error && <p className="field-error" role="alert">{error}</p>}
+        </div>
       </section>
 
       <aside className="onboarding-shelf" aria-label="비어 있는 첫 책장">
@@ -544,6 +528,7 @@ function BookStatusDialog({ book, mode, open, onOpenChange, onConfirm }) {
 function BookDetailScreen({
   book,
   userId,
+  quoteExposureId,
   startInReadingContext,
   onBackToBookshelf,
   onSaveRecord,
@@ -682,7 +667,11 @@ function BookDetailScreen({
           if (editingRecord) {
             await onUpdateRecord(book.id, editingRecord.record.id, record);
           } else {
-            await onSaveRecord(book.id, { ...record, readingDurationSeconds: pendingDurationSeconds });
+            await onSaveRecord(book.id, {
+              ...record,
+              readingDurationSeconds: pendingDurationSeconds,
+              quoteExposureId,
+            });
             setPendingDurationSeconds(null);
             setIsReadingContextActive(false);
           }
@@ -716,7 +705,8 @@ function BookDetailScreen({
 }
 
 export default function App() {
-  const [user, setUser] = useState(() => readStoredUser());
+  const [user, setUser] = useState(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isAddBookOpen, setIsAddBookOpen] = useState(false);
   const [books, setBooks] = useState([]);
   const [completedBooks, setCompletedBooks] = useState([]);
@@ -732,6 +722,24 @@ export default function App() {
   const [isBookDetailLoading, setIsBookDetailLoading] = useState(false);
   const [bookDetailError, setBookDetailError] = useState('');
   const [shouldStartReading, setShouldStartReading] = useState(false);
+  const [quote, setQuote] = useState(null);
+  const [quoteExposure, setQuoteExposure] = useState(null);
+  const [activeQuoteExposureId, setActiveQuoteExposureId] = useState(null);
+
+  useEffect(() => {
+    let isCancelled = false;
+    getSession()
+      .then((sessionUser) => {
+        if (!isCancelled) setUser(sessionUser);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!isCancelled) setIsAuthLoading(false);
+      });
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (user && window.location.pathname === '/') {
@@ -753,7 +761,7 @@ export default function App() {
     setBookDetailError('');
     setBookDetail(null);
 
-    getBook(selectedBookId, user.id)
+    getBook(selectedBookId)
       .then((detail) => {
         if (!isCancelled) setBookDetail(detail);
       })
@@ -776,16 +784,12 @@ export default function App() {
     setIsBooksLoading(true);
     setBooksError('');
 
-    Promise.all([
-      getBooks(user.id, 'READING'),
-      getBooks(user.id, 'COMPLETED'),
-      getBooks(user.id, 'ARCHIVED'),
-    ])
-      .then(([readingShelf, completedShelf, archivedShelf]) => {
+    getBooks()
+      .then((shelf) => {
         if (!isCancelled) {
-          setBooks(readingShelf.books);
-          setCompletedBooks(completedShelf.books);
-          setArchivedBooks(archivedShelf.books);
+          setBooks(shelf.reading);
+          setCompletedBooks(shelf.completed);
+          setArchivedBooks(shelf.archived);
         }
       })
       .catch((requestError) => {
@@ -800,8 +804,36 @@ export default function App() {
     };
   }, [user]);
 
+  useEffect(() => {
+    if (!user) return undefined;
+    let isCancelled = false;
+    getRandomQuote()
+      .then((nextQuote) => {
+        if (!isCancelled) setQuote(nextQuote);
+      })
+      .catch(() => {});
+    return () => {
+      isCancelled = true;
+    };
+  }, [user]);
+
+  useEffect(() => {
+    if (!quote || selectedBookId) {
+      setQuoteExposure(null);
+      return undefined;
+    }
+    let isCancelled = false;
+    createQuoteExposure(quote.id)
+      .then((exposure) => {
+        if (!isCancelled) setQuoteExposure(exposure);
+      })
+      .catch(() => {});
+    return () => {
+      isCancelled = true;
+    };
+  }, [quote, selectedBookId]);
+
   function handleOnboardingComplete(newUser) {
-    window.localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(newUser));
     window.history.pushState({}, '', '/bookshelf');
     setUser(newUser);
   }
@@ -862,52 +894,49 @@ export default function App() {
   }
 
   async function handleCreateBook(input) {
-    const newBook = await createBook({ userId: user.id, ...input });
+    const newBook = await createBook(input);
     setBooks((currentBooks) => [newBook, ...currentBooks]);
     openBook(newBook.id, false, newBook);
   }
 
   async function handleSaveRecord(bookId, recordInput) {
-    await createReadingRecord({ bookId, userId: user.id, ...recordInput });
+    await createReadingRecord({ bookId, ...recordInput });
+    if (recordInput.quoteExposureId) setActiveQuoteExposureId(null);
     await refreshBookData(bookId);
   }
 
   async function refreshShelves() {
-    const [readingShelf, completedShelf, archivedShelf] = await Promise.all([
-      getBooks(user.id, 'READING'),
-      getBooks(user.id, 'COMPLETED'),
-      getBooks(user.id, 'ARCHIVED'),
-    ]);
-    setBooks(readingShelf.books);
-    setCompletedBooks(completedShelf.books);
-    setArchivedBooks(archivedShelf.books);
+    const shelf = await getBooks();
+    setBooks(shelf.reading);
+    setCompletedBooks(shelf.completed);
+    setArchivedBooks(shelf.archived);
   }
 
   async function refreshBookData(bookId) {
     const [, refreshedDetail] = await Promise.all([
       refreshShelves(),
-      getBook(bookId, user.id),
+      getBook(bookId),
     ]);
     setBookDetail(refreshedDetail);
   }
 
   async function handleUpdateStatus(bookId, statusInput) {
-    await updateBookStatus({ bookId, userId: user.id, ...statusInput });
+    await updateBookStatus({ bookId, ...statusInput });
     await refreshBookData(bookId);
   }
 
   async function handleRestoreBook(bookId) {
-    await updateBookStatus({ bookId, userId: user.id, status: 'READING' });
+    await updateBookStatus({ bookId, status: 'READING' });
     await refreshShelves();
   }
 
   async function handleUpdateRecord(bookId, recordId, recordInput) {
-    await updateReadingRecord({ bookId, recordId, userId: user.id, ...recordInput });
+    await updateReadingRecord({ bookId, recordId, ...recordInput });
     await refreshBookData(bookId);
   }
 
   async function handleDeleteRecord(bookId, recordId) {
-    await deleteReadingRecord({ bookId, recordId, userId: user.id });
+    await deleteReadingRecord({ bookId, recordId });
     await refreshBookData(bookId);
   }
 
@@ -917,6 +946,19 @@ export default function App() {
 
   function handleContinueReading(bookId) {
     openBook(bookId, true);
+  }
+
+  function handleOpenQuote() {
+    if (!quote) return;
+    if (quoteExposure) {
+      openQuoteExposure(quoteExposure.id).catch(() => {});
+      setActiveQuoteExposureId(quoteExposure.id);
+    }
+    openBook(quote.bookId, true);
+  }
+
+  if (isAuthLoading) {
+    return <main className="bookshelf-preview"><p className="bookshelf-status">잇장을 불러오고 있어요.</p></main>;
   }
 
   if (!user) {
@@ -942,6 +984,7 @@ export default function App() {
           key={`${bookDetail.id}-${shouldStartReading}`}
           book={bookDetail}
           userId={user.id}
+          quoteExposureId={quote?.bookId === bookDetail.id ? activeQuoteExposureId : null}
           startInReadingContext={shouldStartReading}
           onBackToBookshelf={() => {
             setSelectedBookId(null);
@@ -967,6 +1010,8 @@ export default function App() {
           onSelectBook={handleSelectBook}
           onContinueReading={handleContinueReading}
           onRestoreBook={handleRestoreBook}
+          quote={quote}
+          onOpenQuote={handleOpenQuote}
         />
       ) : (
         <EmptyBookshelf user={user} onAddBook={() => setIsAddBookOpen(true)} />
