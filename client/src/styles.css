@@ -2247,6 +2247,122 @@ input:focus-visible {
   max-width: 100%;
 }
 
+.reading-activity-calendar {
+  border-top: 0.55rem solid var(--accent);
+  background: rgb(255 253 248 / 78%);
+  padding: 1rem 1.1rem 1.15rem;
+}
+
+.reading-activity-calendar__header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.reading-activity-calendar__header .section-kicker {
+  margin-bottom: 0.3rem;
+}
+
+.reading-activity-calendar__header h2 {
+  margin: 0;
+  font-family: Georgia, "Noto Serif KR", serif;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.reading-activity-calendar__header > span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.reading-activity-calendar__body {
+  display: flex;
+  gap: 0.55rem;
+  margin-top: 1rem;
+  overflow-x: auto;
+  padding-bottom: 0.2rem;
+}
+
+.reading-activity-calendar__weekdays {
+  display: grid;
+  grid-template-rows: repeat(7, 0.82rem);
+  gap: 0.28rem;
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 0.64rem;
+  line-height: 0.82rem;
+}
+
+.reading-activity-calendar__grid {
+  display: grid;
+  grid-template-rows: repeat(7, 0.82rem);
+  grid-auto-columns: 0.82rem;
+  grid-auto-flow: column;
+  gap: 0.28rem;
+  min-width: max-content;
+}
+
+.reading-activity-calendar__day {
+  display: block;
+  width: 0.82rem;
+  height: 0.82rem;
+  border: 1px solid rgb(36 33 31 / 10%);
+  background: #e7dfd3;
+}
+
+.reading-activity-calendar__day--1 {
+  background: #d7a99c;
+}
+
+.reading-activity-calendar__day--2 {
+  background: #bf7765;
+}
+
+.reading-activity-calendar__day--3 {
+  background: #9f4e3d;
+}
+
+.reading-activity-calendar__day--4 {
+  background: var(--accent-dark);
+}
+
+.reading-activity-calendar__day.is-future {
+  border-color: transparent;
+  background: rgb(231 223 211 / 35%);
+}
+
+.reading-activity-calendar__day:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.reading-activity-calendar__status,
+.reading-activity-calendar__empty {
+  margin: 1rem 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.reading-activity-calendar__status p {
+  margin: 0;
+}
+
+.reading-activity-calendar__status button {
+  margin-top: 0.55rem;
+  border: 0;
+  border-bottom: 1px solid currentColor;
+  padding: 0;
+  color: var(--accent-dark);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
 .bookshelf-details .status-shelves {
   grid-template-columns: 1fr;
   margin-top: 0;
