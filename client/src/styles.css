@@ -2405,6 +2405,7 @@ input:focus-visible {
 
 .bookshelf-details {
   align-content: center;
+  grid-template-columns: minmax(0, 1fr);
   gap: clamp(2.5rem, 5vw, 4.5rem);
 }
 
@@ -2570,7 +2571,7 @@ input:focus-visible {
 
   .bookshelf-details,
   .bookshelf-lower .status-shelves {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .bookshelf-details .continue-reading-card {
