@@ -163,8 +163,8 @@ export function ReadingBookshelf({
       </header>
 
       <section className="reading-bookshelf" aria-labelledby="reading-shelf-title">
-        <div className="reading-room-layout">
-          <div className="room-stage">
+        <div className="bookshelf-layout">
+          <div className="bookshelf-stage">
             <div className="three-bookshelf" aria-label="읽는 중인 책 선반">
               <Suspense fallback={<div className="three-bookshelf__loading">책장을 준비하고 있어요.</div>}>
                 <ThreeBookshelf
@@ -195,7 +195,6 @@ export function ReadingBookshelf({
                   </li>
                 ))}
               </ul>
-              <div className="three-bookshelf__ground" aria-hidden="true" />
               {bookOpeningPhase && (
                 <p className="three-bookshelf__motion-debug" role="status" aria-live="polite">
                   <span>{phaseLabels[bookOpeningPhase]}</span>
@@ -223,11 +222,11 @@ export function ReadingBookshelf({
             </div>
 
             {continueBook ? (
-              <div className="room-stage__continue">
+              <div className="bookshelf-details__continue">
                 <ContinueReadingCard book={continueBook} onContinueReading={onContinueReading} />
               </div>
             ) : (
-              <div className="room-stage__empty">
+              <div className="bookshelf-details__empty">
                 <p className="section-kicker">NEXT PAGE</p>
                 <strong>읽고 있는 책을 한 권 꽂아볼까요?</strong>
                 <Button type="button" onClick={onAddBook}>읽고 있는 책 추가</Button>

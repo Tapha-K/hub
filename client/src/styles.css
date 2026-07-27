@@ -1438,13 +1438,10 @@ input:focus-visible {
   }
 }
 
-/* W3 room: the reading shelf remains the main stage; status shelves stay quiet. */
 .bookshelf-preview {
-  --room-wall: #f3e7d3;
-  --room-floor: #afc9de;
   padding-right: clamp(1rem, 4vw, 4rem);
   padding-left: clamp(1rem, 4vw, 4rem);
-  background: var(--room-wall);
+  background: var(--canvas);
 }
 
 .reading-bookshelf {
@@ -1457,29 +1454,7 @@ input:focus-visible {
   z-index: 3;
 }
 
-.room-stage {
-  position: relative;
-  min-height: clamp(34rem, calc(100dvh - 12rem), 48rem);
-  margin-top: 0.9rem;
-}
-
-.three-bookshelf {
-  height: clamp(34rem, calc(100dvh - 12rem), 48rem);
-  margin-top: 0;
-  border: 1px solid rgb(36 33 31 / 16%);
-  background: var(--room-wall);
-  box-shadow: 0 1.4rem 2.6rem rgb(72 55 40 / 15%);
-}
-
-.room-stage__continue {
-  position: absolute;
-  z-index: 6;
-  right: 4%;
-  bottom: 8%;
-  width: min(28rem, 42%);
-}
-
-.room-stage__continue .continue-reading-card {
+.bookshelf-details__continue .continue-reading-card {
   align-items: end;
   margin: 0;
   border: 1px solid rgb(36 33 31 / 14%);
@@ -1489,50 +1464,45 @@ input:focus-visible {
   box-shadow: 0 0.8rem 1.4rem rgb(72 55 40 / 14%);
 }
 
-.room-stage__continue .continue-reading-card__book {
+.bookshelf-details__continue .continue-reading-card__book {
   width: 3.7rem;
   height: 5.5rem;
 }
 
-.room-stage__continue .continue-reading-card__book-spine {
+.bookshelf-details__continue .continue-reading-card__book-spine {
   width: 2.8rem;
   height: 4.8rem;
 }
 
-.room-stage__continue .continue-reading-card__impression {
+.bookshelf-details__continue .continue-reading-card__impression {
   max-width: 15rem;
 }
 
-.room-stage__continue .continue-reading-card > button {
+.bookshelf-details__continue .continue-reading-card > button {
   min-height: 2.6rem;
   font-size: 0.82rem;
 }
 
-.room-stage__empty {
-  position: absolute;
-  z-index: 6;
-  right: 5%;
-  bottom: 9%;
+.bookshelf-details__empty {
   display: grid;
   gap: 0.35rem;
-  width: min(20rem, 38%);
   border-left: 0.3rem solid var(--accent);
   background: rgb(255 253 248 / 94%);
   padding: 1.1rem 1.2rem;
   box-shadow: 0 0.8rem 1.4rem rgb(72 55 40 / 14%);
 }
 
-.room-stage__empty .section-kicker {
+.bookshelf-details__empty .section-kicker {
   margin-bottom: 0.1rem;
 }
 
-.room-stage__empty strong {
+.bookshelf-details__empty strong {
   font-family: Georgia, "Noto Serif KR", serif;
   font-size: 1.05rem;
   font-weight: 600;
 }
 
-.room-stage__empty button {
+.bookshelf-details__empty button {
   justify-self: start;
   min-height: 2.4rem;
   margin-top: 0.5rem;
@@ -1809,27 +1779,7 @@ input:focus-visible {
 }
 
 @media (max-width: 760px) {
-  .room-stage,
-  .three-bookshelf {
-    min-height: 30rem;
-    height: 30rem;
-  }
-
-  .room-stage__continue {
-    right: 4%;
-    bottom: 5%;
-    left: 4%;
-    width: auto;
-  }
-
-  .room-stage__empty {
-    right: 4%;
-    bottom: 5%;
-    left: 4%;
-    width: auto;
-  }
-
-  .room-stage__continue .continue-reading-card {
+  .bookshelf-details__continue .continue-reading-card {
     align-items: start;
     flex-direction: column;
     gap: 0.9rem;
@@ -1879,9 +1829,9 @@ input:focus-visible {
   height: 26rem;
   margin-top: 3rem;
   overflow: hidden;
-  border: 1px solid rgb(111 74 53 / 22%);
-  background: #d7c0aa;
-  box-shadow: 0 1.2rem 2rem rgb(72 55 40 / 10%);
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .three-bookshelf__canvas {
@@ -2151,27 +2101,27 @@ input:focus-visible {
   }
 }
 
-/* Reading room: the shelf anchors the page; its information stays alongside it. */
+/* The 3D shelf stays local to the books; the rest of the page remains DOM UI. */
 .bookshelf-preview .reading-bookshelf {
   width: min(100%, 92rem);
   margin: 1.7rem auto 0;
 }
 
-.reading-room-layout {
+.bookshelf-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(20rem, 0.8fr);
   align-items: start;
   gap: clamp(1.5rem, 3vw, 3rem);
 }
 
-.reading-room-layout .room-stage {
+.bookshelf-layout .bookshelf-stage {
   position: sticky;
   top: 1rem;
   min-height: 0;
   margin: 0;
 }
 
-.reading-room-layout .three-bookshelf {
+.bookshelf-layout .three-bookshelf {
   height: clamp(32rem, calc(100dvh - 4rem), 44rem);
   margin: 0;
 }
@@ -2229,12 +2179,6 @@ input:focus-visible {
 
 .bookshelf-details .reading-bookshelf__heading {
   align-items: flex-start;
-}
-
-.bookshelf-details .room-stage__continue,
-.bookshelf-details .room-stage__empty {
-  position: static;
-  width: auto;
 }
 
 .bookshelf-details .continue-reading-card {
@@ -2373,15 +2317,15 @@ input:focus-visible {
     margin-top: 2rem;
   }
 
-  .reading-room-layout {
+  .bookshelf-layout {
     grid-template-columns: 1fr;
   }
 
-  .reading-room-layout .room-stage {
+  .bookshelf-layout .bookshelf-stage {
     position: static;
   }
 
-  .reading-room-layout .three-bookshelf {
+  .bookshelf-layout .three-bookshelf {
     height: clamp(24rem, 65dvh, 34rem);
   }
 }

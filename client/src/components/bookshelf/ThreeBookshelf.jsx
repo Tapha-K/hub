@@ -284,42 +284,19 @@ function BookModel({ book, index, total, selectedBookId, bookOpeningPhase, openi
   );
 }
 
-function RoomModel() {
-  return (
-    <group>
-      <RoundedBox args={[16, 8, 0.16]} radius={0.08} smoothness={3} position={[0, 2.1, -2.35]} receiveShadow>
-        <meshStandardMaterial color="#f3e7d3" roughness={0.96} />
-      </RoundedBox>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2.12, 1.2]} receiveShadow>
-        <planeGeometry args={[18, 14]} />
-        <meshStandardMaterial color="#afc9de" roughness={0.98} />
-      </mesh>
-      <RoundedBox args={[2.35, 1.4, 0.12]} radius={0.05} smoothness={3} position={[4.15, 2.25, -2.18]} castShadow>
-        <meshStandardMaterial color="#9b6747" roughness={0.88} />
-      </RoundedBox>
-      <RoundedBox args={[1.92, 0.96, 0.08]} radius={0.03} smoothness={3} position={[4.15, 2.25, -2.1]}>
-        <meshStandardMaterial color="#fffaf0" roughness={0.98} />
-      </RoundedBox>
-    </group>
-  );
-}
-
 function ShelfModel() {
   return (
     <group>
-      <RoundedBox args={[9.3, 4.7, 0.25]} radius={0.08} smoothness={4} position={[0, 0.45, -2.08]} receiveShadow>
-        <meshStandardMaterial color="#664532" roughness={0.84} />
-      </RoundedBox>
-      <RoundedBox args={[9.6, 0.3, 4.4]} radius={0.06} smoothness={4} position={[0, -1.48, -0.05]} castShadow receiveShadow>
+      <RoundedBox args={[9.6, 0.3, 0.78]} radius={0.06} smoothness={4} position={[0, -1.48, -0.22]} castShadow receiveShadow>
         <meshStandardMaterial color="#8e5f43" roughness={0.74} />
       </RoundedBox>
-      <RoundedBox args={[9.6, 0.24, 4.4]} radius={0.06} smoothness={4} position={[0, 2.75, -0.05]} castShadow receiveShadow>
+      <RoundedBox args={[9.6, 0.24, 0.78]} radius={0.06} smoothness={4} position={[0, 2.75, -0.22]} castShadow receiveShadow>
         <meshStandardMaterial color="#754a35" roughness={0.78} />
       </RoundedBox>
-      <RoundedBox args={[0.3, 4.5, 4.4]} radius={0.06} smoothness={4} position={[-4.66, 0.62, -0.05]} castShadow receiveShadow>
+      <RoundedBox args={[0.3, 4.5, 0.78]} radius={0.06} smoothness={4} position={[-4.66, 0.62, -0.22]} castShadow receiveShadow>
         <meshStandardMaterial color="#744a35" roughness={0.8} />
       </RoundedBox>
-      <RoundedBox args={[0.3, 4.5, 4.4]} radius={0.06} smoothness={4} position={[4.66, 0.62, -0.05]} castShadow receiveShadow>
+      <RoundedBox args={[0.3, 4.5, 0.78]} radius={0.06} smoothness={4} position={[4.66, 0.62, -0.22]} castShadow receiveShadow>
         <meshStandardMaterial color="#744a35" roughness={0.8} />
       </RoundedBox>
     </group>
@@ -344,11 +321,9 @@ export function ThreeBookshelf({ books, selectedBookId, bookOpeningPhase, openin
         shadows
         dpr={[1, 1.25]}
         camera={{ position: [0, 0.3, 9.8], fov: 34 }}
-        gl={{ antialias: true, alpha: false }}
+        gl={{ antialias: true, alpha: true }}
       >
         <ResponsiveCamera />
-        <color attach="background" args={['#f3e7d3']} />
-        <fog attach="fog" args={['#f3e7d3', 8, 16]} />
         <ambientLight intensity={1.35} />
         <directionalLight
           castShadow
@@ -365,7 +340,6 @@ export function ThreeBookshelf({ books, selectedBookId, bookOpeningPhase, openin
         <pointLight position={[3.2, 2.8, 3.8]} intensity={14} distance={12} color="#e9af7d" />
         <pointLight position={[-3.5, 0.2, 2]} intensity={8} distance={10} color="#9bb7bc" />
 
-        <RoomModel />
         <ShelfModel />
         {books.map((book, index) => (
           <BookModel
