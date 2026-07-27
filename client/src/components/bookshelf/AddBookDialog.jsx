@@ -18,6 +18,12 @@ export function AddBookDialog({ open, onOpenChange, onCreateBook }) {
   const queryId = useId();
   const initialPageId = useId();
   const searchRequestId = useRef(0);
+  const finalFocusRef = useRef(null);
+  const wasOpenRef = useRef(open);
+  if (open && !wasOpenRef.current && typeof document !== 'undefined') {
+    finalFocusRef.current = document.activeElement;
+  }
+  wasOpenRef.current = open;
   const [draft, setDraft] = useState({ query: '', providerId: '', initialPage: '1' });
   const [results, setResults] = useState([]);
   const [hasSearched, setHasSearched] = useState(false);
@@ -101,7 +107,7 @@ export function AddBookDialog({ open, onOpenChange, onCreateBook }) {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="add-book-dialog" showCloseButton={false}>
+      <DialogContent className="add-book-dialog" showCloseButton={false} finalFocus={finalFocusRef}>
         <DialogHeader className="add-book-dialog__header">
           <p className="section-kicker">ADD A BOOK</p>
           <DialogTitle>읽고 있는 책을 꽂아볼까요?</DialogTitle>
