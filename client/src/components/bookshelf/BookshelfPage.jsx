@@ -258,6 +258,9 @@ export function BookshelfPage({ user }) {
     await createReadingRecord({ bookId, ...recordInput });
     if (recordInput.quoteExposureId) setActiveQuoteExposureId(null);
     await refreshBookData(bookId);
+    if (recordInput.quoteText) {
+      await getRandomQuote().then(setQuote).catch(() => {});
+    }
     setReadingActivityRequest((request) => request + 1);
   }
 
