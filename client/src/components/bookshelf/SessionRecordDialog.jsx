@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -17,6 +17,12 @@ export function SessionRecordDialog({ book, record = null, canEditPage = true, o
   const impressionId = useId();
   const quoteId = useId();
   const overrideId = useId();
+  const finalFocusRef = useRef(null);
+  const wasOpenRef = useRef(open);
+  if (open && !wasOpenRef.current && typeof document !== 'undefined') {
+    finalFocusRef.current = document.activeElement;
+  }
+  wasOpenRef.current = open;
   const [draft, setDraft] = useState({
     endPage: '',
     impression: '',
@@ -107,7 +113,7 @@ export function SessionRecordDialog({ book, record = null, canEditPage = true, o
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="record-dialog" showCloseButton={false}>
+      <DialogContent className="record-dialog" showCloseButton={false} finalFocus={finalFocusRef}>
         <DialogHeader className="record-dialog__header">
           <p className="section-kicker">{isEditing ? 'EDIT A RECORD' : 'ADD A RECORD'}</p>
           <DialogTitle>
