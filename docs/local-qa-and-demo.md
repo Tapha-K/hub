@@ -10,7 +10,9 @@
 - Google Cloud의 Web OAuth 클라이언트 ID
 - Google Books API 키
 
-Google Cloud Console에서 Web OAuth 클라이언트의 승인된 JavaScript 원본에 `http://localhost:5173`을 추가합니다. 같은 클라이언트 ID를 서버의 `GOOGLE_CLIENT_ID`와 클라이언트의 `VITE_GOOGLE_CLIENT_ID`에 사용해야 서버가 Google ID 토큰의 대상 사용자를 검증할 수 있습니다.
+Google Cloud Console에서 Web OAuth 클라이언트의 승인된 JavaScript 원본에 `http://localhost`와 `http://localhost:5173`을 모두 추가합니다. Google Identity Services의 로컬 개발 지침은 포트 없는 localhost와 실제 개발 서버 origin을 함께 요구합니다. 같은 클라이언트 ID를 서버의 `GOOGLE_CLIENT_ID`와 클라이언트의 `VITE_GOOGLE_CLIENT_ID`에 사용해야 서버가 Google ID 토큰의 대상 사용자를 검증할 수 있습니다.
+
+Vite 개발 서버는 HTTP localhost에서 Google 로그인 요청이 올바른 referrer를 전달하도록 `Referrer-Policy: no-referrer-when-downgrade` 응답 헤더를 설정합니다.
 
 ## 1. 환경 변수 준비
 
@@ -162,7 +164,8 @@ cd server
 - `client/.env`에 `VITE_GOOGLE_CLIENT_ID`가 있는지 확인합니다.
 - 환경 변수를 바꾼 뒤 `npm run dev`를 다시 시작합니다.
 - OAuth 클라이언트가 Web 애플리케이션 유형인지 확인합니다.
-- 승인된 JavaScript 원본에 정확히 `http://localhost:5173`이 있는지 확인합니다.
+- 승인된 JavaScript 원본에 `http://localhost`와 정확한 개발 서버 origin인 `http://localhost:5173`이 모두 있는지 확인합니다.
+- `curl -I http://localhost:5173` 응답에 `Referrer-Policy: no-referrer-when-downgrade`가 있는지 확인합니다.
 
 ### 로그인 요청이 거부된다
 
