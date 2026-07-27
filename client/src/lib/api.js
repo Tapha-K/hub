@@ -1,5 +1,6 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
 let csrfToken = null;
+let sessionRequest = null;
 
 export class ApiError extends Error {
   constructor(message, { code, status } = {}) {
@@ -40,10 +41,18 @@ async function request(path, options = {}) {
   return body;
 }
 
-export async function getSession() {
-  const session = await request('/api/auth/session');
-  csrfToken = session.csrfToken;
-  return session.user;
+export function getSession() {
+  if (!sessionRequest) {
+    sessionRequest = request('/api/auth/session')
+      .then((session) => {
+        csrfToken = session.csrfToken;
+        return session.user;
+      })
+      .finally(() => {
+        sessionRequest = null;
+      });
+  }
+  return sessionRequest;
 }
 
 export async function loginWithGoogle(credential) {
