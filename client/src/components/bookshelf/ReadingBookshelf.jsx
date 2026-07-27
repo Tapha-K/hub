@@ -163,6 +163,18 @@ export function ReadingBookshelf({
       </header>
 
       <section className="reading-bookshelf" aria-labelledby="reading-shelf-title">
+        <div className="reading-bookshelf__heading">
+          <div>
+            <p className="section-kicker">NOW READING</p>
+            <h1 id="reading-shelf-title">읽고 있는 책</h1>
+            <p>{books.length}권의 책이 다음 장을 기다리고 있어요.</p>
+          </div>
+          <Button className="reading-bookshelf__add" type="button" onClick={onAddBook}>
+            <Plus aria-hidden="true" size={17} strokeWidth={1.8} />
+            책 추가
+          </Button>
+        </div>
+
         <div className="bookshelf-layout">
           <div className="bookshelf-stage">
             <div className="three-bookshelf" aria-label="읽는 중인 책 선반">
@@ -209,18 +221,6 @@ export function ReadingBookshelf({
 
           <aside className="bookshelf-details">
             <QuoteBanner quote={quote} book={quoteBook} onOpen={onOpenQuote} />
-            <div className="reading-bookshelf__heading">
-              <div>
-                <p className="section-kicker">NOW READING</p>
-                <h1 id="reading-shelf-title">읽고 있는 책</h1>
-                <p>{books.length}권의 책이 다음 장을 기다리고 있어요.</p>
-              </div>
-              <Button className="reading-bookshelf__add" type="button" onClick={onAddBook}>
-                <Plus aria-hidden="true" size={17} strokeWidth={1.8} />
-                책 추가
-              </Button>
-            </div>
-
             {continueBook ? (
               <div className="bookshelf-details__continue">
                 <ContinueReadingCard book={continueBook} onContinueReading={onContinueReading} />
@@ -232,14 +232,20 @@ export function ReadingBookshelf({
                 <Button type="button" onClick={onAddBook}>읽고 있는 책 추가</Button>
               </div>
             )}
+          </aside>
+        </div>
 
+        <div className="bookshelf-lower">
+          <div className="bookshelf-lower__activity">
             <ReadingActivityCalendar
               activity={readingActivity}
               isLoading={isReadingActivityLoading}
               error={readingActivityError}
               onRetry={onRetryReadingActivity}
             />
+          </div>
 
+          <div>
             <div className="status-shelves" aria-label="완독 및 보관 책장">
               <StatusShelf
                 title="완독"
@@ -262,7 +268,7 @@ export function ReadingBookshelf({
               />
             </div>
             {restoreError && <p className="status-shelves__error" role="alert">{restoreError}</p>}
-          </aside>
+          </div>
         </div>
       </section>
     </main>
