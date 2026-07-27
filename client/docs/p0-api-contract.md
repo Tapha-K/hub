@@ -1,5 +1,7 @@
 # P0 API Contract
 
+> **초기 계약 기록:** 이 문서의 닉네임 생성과 요청별 `userId` 전달 방식은 Google 로그인·서버 세션 전환으로 폐기됐습니다. 현재 공개 API와 인증 경계는 [`docs/current-implementation-status.md`](../../docs/current-implementation-status.md)를 따릅니다. 이 문서는 전환 전 계약과 판단을 공부할 수 있도록 보존합니다.
+
 ## 목적
 
 이 계약은 React mock 상태를 Spring Boot API로 교체할 때 사용할 최소 인터페이스다. P0에서 닉네임은 표시명일 뿐이며, 클라이언트가 브라우저에 보관한 `userId`만 같은 책장을 다시 조회하는 기준이다.
