@@ -76,10 +76,10 @@ export function searchBooks(query) {
   return request(`/api/books/search?q=${encodeURIComponent(query.trim())}`);
 }
 
-export function createBook({ providerId, initialPage }) {
+export function createBook({ providerId, title, initialPage }) {
   return request('/api/books', {
     method: 'POST',
-    body: JSON.stringify({ providerId, initialPage }),
+    body: JSON.stringify({ providerId, title, initialPage }),
   });
 }
 

@@ -15,12 +15,12 @@ test('uses the login session and csrf token without sending a client user id', a
 
   const { createBook, loginWithGoogle } = await import('./api');
   await loginWithGoogle('google-id-token');
-  await createBook({ providerId: 'volume-1', initialPage: 1 });
+  await createBook({ providerId: 'volume-1', title: '내 책 이름', initialPage: 1 });
 
   const [, options] = fetch.mock.calls[1];
   expect(options.credentials).toBe('include');
   expect(options.headers['X-CSRF-Token']).toBe('csrf-token');
-  expect(JSON.parse(options.body)).toEqual({ providerId: 'volume-1', initialPage: 1 });
+  expect(JSON.parse(options.body)).toEqual({ providerId: 'volume-1', title: '내 책 이름', initialPage: 1 });
 });
 
 test('requests reading activity for the selected date range', async () => {
