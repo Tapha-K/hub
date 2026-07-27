@@ -2329,3 +2329,251 @@ input:focus-visible {
     height: clamp(24rem, 65dvh, 34rem);
   }
 }
+
+/* Bookshelf visual hierarchy: one reading stage, one return column, one archive band. */
+.bookshelf-preview .reading-bookshelf {
+  margin-top: clamp(2.2rem, 5vw, 4.8rem);
+}
+
+.bookshelf-preview .reading-bookshelf__heading {
+  align-items: end;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: clamp(1.4rem, 2.5vw, 2.2rem);
+}
+
+.bookshelf-preview .reading-bookshelf__heading h1 {
+  font-size: clamp(2.8rem, 5vw, 5.2rem);
+  font-weight: 500;
+  letter-spacing: -0.085em;
+  line-height: 0.95;
+}
+
+.bookshelf-preview .reading-bookshelf__heading p:not(.section-kicker) {
+  margin-top: 1.1rem;
+  font-size: 1rem;
+}
+
+.bookshelf-preview .reading-bookshelf__add {
+  min-height: 2.9rem;
+  padding-inline: 1.05rem;
+  background: var(--ink);
+  color: var(--paper);
+  box-shadow: none;
+}
+
+.bookshelf-preview .reading-bookshelf__add:hover {
+  background: var(--accent-dark);
+}
+
+.bookshelf-preview__header a,
+.bookshelf-details .continue-reading-card > button,
+.bookshelf-lower .status-shelf__restore {
+  min-height: 3rem;
+}
+
+.bookshelf-layout {
+  grid-template-columns: minmax(0, 1.45fr) minmax(19rem, 0.55fr);
+  align-items: center;
+  gap: clamp(2.5rem, 6vw, 6.5rem);
+  min-height: min(45rem, calc(100dvh - 8rem));
+  padding-block: clamp(2rem, 4vw, 4.5rem);
+}
+
+.bookshelf-layout .bookshelf-stage {
+  position: relative;
+  top: auto;
+}
+
+.bookshelf-layout .bookshelf-stage::before {
+  position: absolute;
+  z-index: 0;
+  inset: 12% 6% 8%;
+  background: radial-gradient(ellipse at center, rgb(192 142 105 / 14%), transparent 68%);
+  content: '';
+  pointer-events: none;
+}
+
+.bookshelf-layout .three-bookshelf {
+  z-index: 1;
+  height: clamp(30rem, 58vw, 40rem);
+}
+
+.bookshelf-layout .three-bookshelf__note {
+  margin-top: -1rem;
+  text-align: center;
+}
+
+.bookshelf-details {
+  align-content: center;
+  gap: clamp(2.5rem, 5vw, 4.5rem);
+}
+
+.quote-banner {
+  position: relative;
+  border: 0;
+  border-top: 1px solid var(--ink);
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  padding: 1.4rem 0 1.2rem;
+}
+
+.quote-banner::before {
+  position: absolute;
+  top: 1rem;
+  right: 0;
+  color: rgb(181 92 62 / 18%);
+  content: '“';
+  font-family: Georgia, "Noto Serif KR", serif;
+  font-size: 5rem;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.quote-banner .section-kicker {
+  margin-bottom: 1.3rem;
+}
+
+.quote-banner blockquote {
+  position: relative;
+  z-index: 1;
+  font-size: clamp(1.2rem, 1.9vw, 1.55rem);
+  line-height: 1.7;
+  text-wrap: pretty;
+}
+
+.quote-banner button {
+  min-height: 2.8rem;
+  margin-top: 1.3rem;
+  padding-top: 0.9rem;
+}
+
+.bookshelf-details .continue-reading-card {
+  display: grid;
+  grid-template-columns: 4rem minmax(0, 1fr);
+  align-items: start;
+  gap: 0.6rem 1.2rem;
+  margin: 0;
+  border: 0;
+  border-top: 1px solid var(--ink);
+  background: transparent;
+  padding: 1.4rem 0 0;
+  box-shadow: none;
+}
+
+.bookshelf-details .continue-reading-card::after {
+  display: none;
+}
+
+.bookshelf-details .continue-reading-card__book {
+  grid-row: 1 / 3;
+}
+
+.bookshelf-details .continue-reading-card > div:nth-child(2) {
+  min-width: 0;
+}
+
+.bookshelf-details .continue-reading-card h2 {
+  font-size: clamp(1.35rem, 2vw, 1.65rem);
+  text-wrap: balance;
+  word-break: keep-all;
+}
+
+.bookshelf-details .continue-reading-card > button {
+  grid-column: 2;
+  justify-self: start;
+  margin-top: 0.5rem;
+}
+
+.bookshelf-details .continue-reading-card__impression {
+  white-space: normal;
+}
+
+.bookshelf-lower {
+  display: grid;
+  grid-template-columns: minmax(22rem, 0.75fr) minmax(0, 1.25fr);
+  align-items: start;
+  gap: clamp(3rem, 7vw, 7rem);
+  border-top: 1px solid var(--ink);
+  padding-block: clamp(2rem, 4vw, 4rem) clamp(4rem, 7vw, 7rem);
+}
+
+.bookshelf-lower .reading-activity-calendar {
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.bookshelf-lower .reading-activity-calendar__header h2 {
+  font-size: clamp(1.45rem, 2.4vw, 2rem);
+}
+
+.bookshelf-lower .reading-activity-calendar__body {
+  margin-top: 1.5rem;
+}
+
+.bookshelf-lower .status-shelves {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 0;
+}
+
+.bookshelf-lower .status-shelf {
+  border: 0;
+  border-top: 0.35rem solid var(--wood);
+  background: transparent;
+  padding: 1rem 0 0;
+}
+
+.bookshelf-lower .status-shelf--archive {
+  border-top-color: #6c8795;
+}
+
+.bookshelf-lower .status-shelf__item {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.bookshelf-lower .status-shelf__restore {
+  justify-self: start;
+  padding-inline: 0.2rem;
+}
+
+@media (max-width: 900px) {
+  .bookshelf-layout {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+    min-height: 0;
+    padding-block: 2rem 4rem;
+  }
+
+  .bookshelf-layout .three-bookshelf {
+    height: clamp(24rem, 65dvh, 34rem);
+  }
+
+  .bookshelf-details {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 2rem;
+  }
+
+  .bookshelf-lower {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .bookshelf-preview .reading-bookshelf__heading {
+    align-items: flex-start;
+  }
+
+  .bookshelf-preview .reading-bookshelf__heading h1 {
+    font-size: clamp(2.6rem, 15vw, 4rem);
+  }
+
+  .bookshelf-details,
+  .bookshelf-lower .status-shelves {
+    grid-template-columns: 1fr;
+  }
+
+  .bookshelf-details .continue-reading-card {
+    grid-template-columns: 3.5rem minmax(0, 1fr);
+  }
+}

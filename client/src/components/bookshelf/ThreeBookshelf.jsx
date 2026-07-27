@@ -132,12 +132,12 @@ function TurningPage({ book, accent, index, shouldTurn, thickness, height, pageW
 }
 
 function BookModel({ book, index, total, selectedBookId, bookOpeningPhase, openingPageCount, hoveredBookId, onHoverBook, onSelectBook }) {
-  const thickness = 0.62;
-  const height = 2.78;
-  const pageWidth = 1.95;
+  const thickness = 0.7;
+  const height = 3.08;
+  const pageWidth = 2.08;
   const coverThickness = 0.075;
   const palette = BOOK_COLORS[index % BOOK_COLORS.length];
-  const homeX = (index - (total - 1) / 2) * 0.88;
+  const homeX = (index - (total - 1) / 2) * 1.02;
   const homeTilt = [-0.045, 0.028, -0.018, 0.04, -0.03][index % 5];
   const isSelected = selectedBookId === book.id;
   const isPulling = isSelected && bookOpeningPhase === 'pulling';
@@ -286,20 +286,16 @@ function BookModel({ book, index, total, selectedBookId, bookOpeningPhase, openi
 
 function ShelfModel() {
   return (
-    <group>
-      <RoundedBox args={[9.6, 0.3, 0.78]} radius={0.06} smoothness={4} position={[0, -1.48, -0.22]} castShadow receiveShadow>
-        <meshStandardMaterial color="#8e5f43" roughness={0.74} />
-      </RoundedBox>
-      <RoundedBox args={[9.6, 0.24, 0.78]} radius={0.06} smoothness={4} position={[0, 2.75, -0.22]} castShadow receiveShadow>
-        <meshStandardMaterial color="#754a35" roughness={0.78} />
-      </RoundedBox>
-      <RoundedBox args={[0.3, 4.5, 0.78]} radius={0.06} smoothness={4} position={[-4.66, 0.62, -0.22]} castShadow receiveShadow>
-        <meshStandardMaterial color="#744a35" roughness={0.8} />
-      </RoundedBox>
-      <RoundedBox args={[0.3, 4.5, 0.78]} radius={0.06} smoothness={4} position={[4.66, 0.62, -0.22]} castShadow receiveShadow>
-        <meshStandardMaterial color="#744a35" roughness={0.8} />
-      </RoundedBox>
-    </group>
+    <RoundedBox
+      args={[9.6, 0.3, 0.78]}
+      radius={0.06}
+      smoothness={4}
+      position={[0, -1.48, -0.22]}
+      castShadow
+      receiveShadow
+    >
+      <meshStandardMaterial color="#8e5f43" roughness={0.74} />
+    </RoundedBox>
   );
 }
 
