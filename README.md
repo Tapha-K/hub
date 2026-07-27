@@ -99,9 +99,9 @@ flowchart LR
 ## 현재 우선순위
 
 - 현재 수직 슬라이스는 `Google 로그인 → 책 등록 → 글귀 저장 → 글귀 배너 → 책 펼치기 → 독서 기록 완료`입니다.
-- 프론트엔드는 React로 책장, 책 상세, 세션 기록 흐름을 먼저 검증합니다.
-- 백엔드는 Spring Boot, MySQL, Flyway로 책과 세션 기록을 저장·조회하는 API를 구현합니다.
-- 다음 단계에서는 책의 위치·꺼내기·펼치기만 3D로 남기고 DOM 기반 재개 흐름과 자연스럽게 연결합니다.
+- 책의 위치·꺼내기·펼치기만 3D로 표현하고, 글귀 배너와 책 상세·입력은 DOM으로 유지하는 페이지 통합 구조를 구현했습니다.
+- Google 로그인, 완독·보관, 최신 기록 정정, 선택적 타이머와 최근 12주 읽기 기록 달력까지 서버 데이터로 연결했습니다.
+- 다음 단계는 전체 수동 QA, 키보드·dialog 접근성 점검과 3D 전환 시간·시각 완성도 조정입니다.
 - OCR, 생각 태그, 독서 발자취와 알림은 글귀 기반 재개 가설이 확인된 뒤 검토합니다.
 
 ## 계획 문서
@@ -116,13 +116,14 @@ flowchart LR
 
 ## 구현 문서
 
+- [Current Implementation Status](docs/current-implementation-status.md): 머지된 기능, 현재 API·컴포넌트·3D 경계와 남은 검증을 한곳에 정리합니다.
 - [Local QA and Demo Runbook](docs/local-qa-and-demo.md): Google 로그인부터 글귀 기반 독서 재개까지 로컬 실행, 통합 QA와 1분 시연 절차를 정리합니다.
 - [AI Collaboration Workflow](AI_WORKFLOW.md): 3주간의 작업 순서, 사용한 Skill·Agent 역할, 발표 진행안을 정리합니다.
 - [Product PRD](client/docs/product-prd.md): Wiki P0/P1 범위를 PC 웹 MVP 요구사항으로 구체화합니다.
 - [Frontend User Flow](client/docs/user-flow.md): MVP 화면 단계와 사용자 흐름을 정리합니다.
 - [Click Unit UI Specification](client/docs/click-unit-ui-spec.md): 화면별 클릭, 모달, 상태 변화를 클릭 단위로 정의합니다.
 - [Component Implementation Notes](client/docs/component-implementation-notes.md): 컴포넌트별 책임, props/state, handler, 표시 조건을 정리합니다.
-- [P0 API Contract](client/docs/p0-api-contract.md): React와 Spring Boot가 공유할 사용자·책·세션 기록 API 계약을 정리합니다.
+- [P0 API Contract](client/docs/p0-api-contract.md): 초기 계약과 이후 인증 전환의 차이를 보존합니다. 현재 공개 API는 Current Implementation Status를 따릅니다.
 - [Architecture Decisions](client/docs/architecture-decisions.md): 인증, 세션, 글귀 독립성, 노출 측정, 조회 성능과 3D 경계를 정리합니다.
 - [Frontend Implementation Notes](client/docs/frontend-implementation-notes.md): 프런트 구현 중 만난 문제의 증상, 원인, 수정과 검증을 누적합니다.
 - [Server Implementation Notes](server/docs/server-implementation-notes.md): 서버 구현 중 만난 인증·데이터·성능 문제와 해결 과정을 누적합니다.
