@@ -2571,6 +2571,10 @@ input:focus-visible {
     align-items: flex-start;
   }
 
+  .bookshelf-layout .three-bookshelf {
+    height: 22rem;
+  }
+
   .bookshelf-preview .reading-bookshelf__heading h1 {
     font-size: clamp(2.6rem, 15vw, 4rem);
   }
