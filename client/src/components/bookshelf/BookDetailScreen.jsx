@@ -30,6 +30,11 @@ function DeleteRecordDialog({ record, open, onOpenChange, onConfirm }) {
     }
   }, [open]);
 
+  function handleOpenChange(nextOpen) {
+    if (!nextOpen && isDeleting) return;
+    onOpenChange(nextOpen);
+  }
+
   async function handleConfirm() {
     setIsDeleting(true);
     setError('');
@@ -42,7 +47,7 @@ function DeleteRecordDialog({ record, open, onOpenChange, onConfirm }) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="record-dialog record-delete-dialog" showCloseButton={false}>
         <DialogHeader className="record-dialog__header">
           <p className="section-kicker">DELETE A RECORD</p>
@@ -83,6 +88,11 @@ function BookStatusDialog({ book, mode, open, onOpenChange, onConfirm }) {
     }
   }, [book, open]);
 
+  function handleOpenChange(nextOpen) {
+    if (!nextOpen && isSaving) return;
+    onOpenChange(nextOpen);
+  }
+
   async function handleConfirm() {
     setIsSaving(true);
     setError('');
@@ -108,7 +118,7 @@ function BookStatusDialog({ book, mode, open, onOpenChange, onConfirm }) {
         : '마지막 책갈피를 유지한 채 읽고 있는 책장으로 돌아가요.';
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="status-dialog" showCloseButton={false}>
         <DialogHeader className="status-dialog__header">
           <p className="section-kicker">{isComplete ? 'FINISH THE BOOK' : isArchive ? 'PUT ASIDE' : 'BRING IT BACK'}</p>
