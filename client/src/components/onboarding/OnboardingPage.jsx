@@ -3,6 +3,10 @@ import { Bookmark, BookOpen, NotebookPen } from 'lucide-react';
 
 import { loginWithGoogle } from '@/lib/api';
 
+let initializedGoogleClientId = null;
+let activeCredentialHandler = null;
+const renderedGoogleButtons = new WeakSet();
+
 function GoogleLoginButton({ onCredential }) {
   const buttonRef = useRef(null);
   const onCredentialRef = useRef(onCredential);
@@ -11,27 +15,38 @@ function GoogleLoginButton({ onCredential }) {
   useEffect(() => {
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
     if (!clientId) return undefined;
+    const handleCredential = ({ credential }) => activeCredentialHandler?.(credential);
 
     function initialize() {
       if (!window.google || !buttonRef.current) return;
-      window.google.accounts.id.initialize({
-        client_id: clientId,
-        callback: ({ credential }) => onCredentialRef.current(credential),
-      });
-      window.google.accounts.id.renderButton(buttonRef.current, {
-        type: 'standard',
-        theme: 'outline',
-        size: 'large',
-        text: 'continue_with',
-        shape: 'rectangular',
-        width: 320,
-      });
+      activeCredentialHandler = onCredentialRef.current;
+      if (initializedGoogleClientId !== clientId) {
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: handleCredential,
+        });
+        initializedGoogleClientId = clientId;
+      }
+      if (!renderedGoogleButtons.has(buttonRef.current)) {
+        window.google.accounts.id.renderButton(buttonRef.current, {
+          type: 'standard',
+          theme: 'outline',
+          size: 'large',
+          text: 'continue_with',
+          shape: 'rectangular',
+          width: 320,
+        });
+        renderedGoogleButtons.add(buttonRef.current);
+      }
     }
 
     const script = document.querySelector('script[src*="accounts.google.com/gsi/client"]');
     initialize();
     script?.addEventListener('load', initialize);
-    return () => script?.removeEventListener('load', initialize);
+    return () => {
+      script?.removeEventListener('load', initialize);
+      if (activeCredentialHandler === onCredentialRef.current) activeCredentialHandler = null;
+    };
   }, []);
 
   if (!import.meta.env.VITE_GOOGLE_CLIENT_ID) {
