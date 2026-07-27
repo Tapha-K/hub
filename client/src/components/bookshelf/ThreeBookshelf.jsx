@@ -12,6 +12,16 @@ const BOOK_COLORS = [
   { cover: '#56715c', edge: '#354b3a', accent: '#d6c789' },
 ];
 
+export const BOOK_PAGE_COLOR = '#ffffff';
+
+export function getTurningPageMotion({ shouldTurn, isZooming, turnedLayer, unturnedLayer }) {
+  return {
+    rotation: shouldTurn ? -Math.PI : 0,
+    layer: shouldTurn ? turnedLayer : unturnedLayer,
+    immediate: isZooming,
+  };
+}
+
 function makeBookLabelTexture(book, accent, variant) {
   const canvas = document.createElement('canvas');
   canvas.width = variant === 'spine' ? 192 : 512;
@@ -33,7 +43,7 @@ function makeBookLabelTexture(book, accent, variant) {
     context.fillRect(-210, 42, 420, 5);
     context.restore();
   } else if (variant === 'page') {
-    context.fillStyle = '#fffaf0';
+    context.fillStyle = BOOK_PAGE_COLOR;
     context.fillRect(0, 0, canvas.width, canvas.height);
     context.strokeStyle = '#d8cfc1';
     context.lineWidth = 2;
@@ -103,14 +113,12 @@ function BookLabel({ book, accent, variant = 'cover', position, rotation = [0, 0
   );
 }
 
-function TurningPage({ book, accent, index, shouldTurn, thickness, height, pageWidth }) {
+function TurningPage({ book, accent, index, shouldTurn, thickness, height, pageWidth, isZooming }) {
   const unturnedLayer = thickness / 2 - 0.01 - index * 0.004;
   const turnedLayer = thickness / 2 - 0.034 + index * 0.004;
   const animation = useSpring({
-    rotation: shouldTurn ? -Math.PI : 0,
-    layer: shouldTurn ? turnedLayer : unturnedLayer,
+    ...getTurningPageMotion({ shouldTurn, isZooming, turnedLayer, unturnedLayer }),
     delay: 0,
-    immediate: false,
     config: { mass: 0.95, tension: 135, friction: 23 },
   });
 
@@ -272,6 +280,7 @@ function BookModel({ book, index, total, selectedBookId, bookOpeningPhase, openi
             thickness={thickness}
             height={height}
             pageWidth={pageWidth}
+            isZooming={isZooming}
           />
         ))}
 
