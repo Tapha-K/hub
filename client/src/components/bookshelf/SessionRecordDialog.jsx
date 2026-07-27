@@ -52,6 +52,7 @@ export function SessionRecordDialog({ book, record = null, canEditPage = true, o
   }
 
   function handleOpenChange(nextOpen) {
+    if (!nextOpen && isSaving) return;
     onOpenChange(nextOpen);
     if (!nextOpen) resetDraft();
   }
@@ -104,7 +105,8 @@ export function SessionRecordDialog({ book, record = null, canEditPage = true, o
         impression: draft.impression.trim(),
         quoteText: isEditing ? null : draft.quoteText.trim(),
       });
-      handleOpenChange(false);
+      onOpenChange(false);
+      resetDraft();
     } catch (requestError) {
       setSubmitError(requestError.message);
       setIsSaving(false);

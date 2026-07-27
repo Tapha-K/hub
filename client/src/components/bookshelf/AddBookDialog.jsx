@@ -32,19 +32,21 @@ export function AddBookDialog({ open, onOpenChange, onCreateBook }) {
   const [isSearching, setIsSearching] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  function handleOpenChange(nextOpen) {
-    onOpenChange(nextOpen);
+  function resetDialog() {
+    searchRequestId.current += 1;
+    setDraft({ query: '', providerId: '', initialPage: '1' });
+    setResults([]);
+    setHasSearched(false);
+    setErrors({});
+    setSubmitError('');
+    setIsSearching(false);
+    setIsSaving(false);
+  }
 
-    if (!nextOpen) {
-      searchRequestId.current += 1;
-      setDraft({ query: '', providerId: '', initialPage: '1' });
-      setResults([]);
-      setHasSearched(false);
-      setErrors({});
-      setSubmitError('');
-      setIsSearching(false);
-      setIsSaving(false);
-    }
+  function handleOpenChange(nextOpen) {
+    if (!nextOpen && isSaving) return;
+    onOpenChange(nextOpen);
+    if (!nextOpen) resetDialog();
   }
 
   async function handleSearch() {
@@ -98,7 +100,8 @@ export function AddBookDialog({ open, onOpenChange, onCreateBook }) {
 
     try {
       await onCreateBook({ providerId: draft.providerId, initialPage });
-      handleOpenChange(false);
+      onOpenChange(false);
+      resetDialog();
     } catch (requestError) {
       setSubmitError(requestError.message);
       setIsSaving(false);
@@ -209,7 +212,7 @@ export function AddBookDialog({ open, onOpenChange, onCreateBook }) {
           {submitError && <p className="field-error" role="alert">{submitError}</p>}
 
           <div className="add-book-dialog__actions">
-            <DialogClose render={<Button type="button" variant="outline" />}>
+            <DialogClose render={<Button type="button" variant="outline" disabled={isSaving} />}>
               취소
             </DialogClose>
             <Button type="submit" disabled={isSaving}>
