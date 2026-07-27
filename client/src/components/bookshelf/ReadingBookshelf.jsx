@@ -176,6 +176,21 @@ export function ReadingBookshelf({
         </div>
 
         <div className="bookshelf-layout">
+          <aside className="bookshelf-details">
+            <QuoteBanner quote={quote} book={quoteBook} onOpen={onOpenQuote} />
+            {continueBook ? (
+              <div className="bookshelf-details__continue">
+                <ContinueReadingCard book={continueBook} onContinueReading={onContinueReading} />
+              </div>
+            ) : (
+              <div className="bookshelf-details__empty">
+                <p className="section-kicker">NEXT PAGE</p>
+                <strong>읽고 있는 책을 한 권 꽂아볼까요?</strong>
+                <Button type="button" onClick={onAddBook}>읽고 있는 책 추가</Button>
+              </div>
+            )}
+          </aside>
+
           <div className="bookshelf-stage">
             <div className="three-bookshelf" aria-label="읽는 중인 책 선반">
               <Suspense fallback={<div className="three-bookshelf__loading">책장을 준비하고 있어요.</div>}>
@@ -218,21 +233,6 @@ export function ReadingBookshelf({
             </div>
             <p className="three-bookshelf__note">책을 누르면 다음에는 지난 갈피부터 이어 읽을 수 있어요.</p>
           </div>
-
-          <aside className="bookshelf-details">
-            <QuoteBanner quote={quote} book={quoteBook} onOpen={onOpenQuote} />
-            {continueBook ? (
-              <div className="bookshelf-details__continue">
-                <ContinueReadingCard book={continueBook} onContinueReading={onContinueReading} />
-              </div>
-            ) : (
-              <div className="bookshelf-details__empty">
-                <p className="section-kicker">NEXT PAGE</p>
-                <strong>읽고 있는 책을 한 권 꽂아볼까요?</strong>
-                <Button type="button" onClick={onAddBook}>읽고 있는 책 추가</Button>
-              </div>
-            )}
-          </aside>
         </div>
 
         <div className="bookshelf-lower">

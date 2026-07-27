@@ -2373,6 +2373,7 @@ input:focus-visible {
 
 .bookshelf-layout {
   grid-template-columns: minmax(0, 1.45fr) minmax(19rem, 0.55fr);
+  grid-template-areas: 'stage details';
   align-items: center;
   gap: clamp(2.5rem, 6vw, 6.5rem);
   min-height: min(45rem, calc(100dvh - 8rem));
@@ -2380,6 +2381,7 @@ input:focus-visible {
 }
 
 .bookshelf-layout .bookshelf-stage {
+  grid-area: stage;
   position: relative;
   top: auto;
 }
@@ -2404,6 +2406,7 @@ input:focus-visible {
 }
 
 .bookshelf-details {
+  grid-area: details;
   align-content: center;
   grid-template-columns: minmax(0, 1fr);
   gap: clamp(2.5rem, 5vw, 4.5rem);
@@ -2540,6 +2543,9 @@ input:focus-visible {
 @media (max-width: 900px) {
   .bookshelf-layout {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      'details'
+      'stage';
     gap: 2.5rem;
     min-height: 0;
     padding-block: 2rem 4rem;
