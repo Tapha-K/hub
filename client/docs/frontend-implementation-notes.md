@@ -187,3 +187,29 @@ Google OAuth Client ID를 `client/.env`에 설정하자 파일이 untracked 상�
 ### 배울 점
 
 외부 SDK의 전역 초기화 횟수와 React 컴포넌트의 생명주기는 분리해야 한다. 컴포넌트는 다시 마운트될 수 있지만 SDK 초기화는 페이지 수명 동안 한 번만 수행하고, 콜백 대상만 현재 컴포넌트로 교체하는 편이 안전하다.
+
+---
+
+## 2026-07-27 · 로컬 Google 로그인 요구사항이 실행 환경에서 빠진 문제
+
+### 증상
+
+Google OAuth 웹 클라이언트와 포트가 일치해도 로컬 Google 로그인 버튼 요청이 origin 오류로 거부됐다. Vite 응답을 확인하니 Google의 HTTP localhost 지침에 명시된 Referrer-Policy가 없었다.
+
+### 원인
+
+로컬 실행 문서에는 포트가 포함된 origin만 안내했고, Vite 개발 서버에도 HTTP localhost용 referrer 정책을 설정하지 않았다.
+
+### 수정
+
+- 승인된 JavaScript 원본에 `http://localhost`와 `http://localhost:5173`을 모두 등록하도록 실행 문서를 고쳤다.
+- Vite 개발 서버 응답에 `Referrer-Policy: no-referrer-when-downgrade`를 추가했다.
+- 이 정책은 localhost 개발 서버에만 적용하고 운영 응답 정책은 배포 환경에서 별도로 정하게 했다.
+
+### 검증
+
+Vite 개발 서버를 다시 시작한 뒤 `curl -I http://localhost:5173`에서 Referrer-Policy 응답 헤더를 확인했다. 브라우저에서 Google 로그인 버튼 요청이 200으로 바뀌고 origin 오류가 사라지는 것까지 확인했으며, 계정 선택 이후의 실제 로그인은 사용자 상호작용으로 별도 검증한다.
+
+### 배울 점
+
+외부 인증 SDK는 코드와 Client ID만 맞아도 끝나지 않는다. 제공자가 요구하는 origin 조합과 브라우저 보안 헤더까지 로컬 실행 환경의 일부로 관리해야 재현 가능한 인증 QA가 된다.
