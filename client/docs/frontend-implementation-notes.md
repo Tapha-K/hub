@@ -161,3 +161,29 @@ Google OAuth Client ID를 `client/.env`에 설정하자 파일이 untracked 상�
 ### 배울 점
 
 브라우저에 전달되는 Client ID가 비밀키가 아니더라도 로컬 환경 파일은 통째로 제외해야 한다. 공개 가능한 변수의 형식은 예제 파일로 공유하고 실제 환경값은 커밋하지 않는다.
+
+---
+
+## 2026-07-27 · React Strict Mode에서 Google 로그인을 두 번 초기화하던 문제
+
+### 증상
+
+로컬 온보딩을 열면 Google Identity Services가 `google.accounts.id.initialize() is called multiple times` 경고를 출력했다.
+
+### 원인
+
+개발 환경의 React Strict Mode는 effect의 setup과 cleanup을 한 번 더 실행한다. 로그인 effect가 실행될 때마다 Google SDK 초기화와 버튼 렌더링을 함께 반복했다.
+
+### 수정
+
+- 모듈에서 초기화한 Client ID를 기억해 같은 ID로 SDK를 다시 초기화하지 않는다.
+- 현재 마운트된 컴포넌트의 credential handler만 모듈 콜백으로 전달한다.
+- 같은 DOM 요소에는 Google 버튼을 한 번만 렌더링한다.
+
+### 검증
+
+`StrictMode` 아래에서 온보딩을 렌더링해 Google SDK 초기화와 버튼 렌더링이 각각 한 번만 호출되는 회귀 테스트를 추가했다.
+
+### 배울 점
+
+외부 SDK의 전역 초기화 횟수와 React 컴포넌트의 생명주기는 분리해야 한다. 컴포넌트는 다시 마운트될 수 있지만 SDK 초기화는 페이지 수명 동안 한 번만 수행하고, 콜백 대상만 현재 컴포넌트로 교체하는 편이 안전하다.
