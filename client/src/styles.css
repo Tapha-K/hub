@@ -2071,7 +2071,7 @@ input:focus-visible {
   }
 
   .three-bookshelf__controls li {
-    flex-basis: 2.25rem;
+    flex-basis: 2.75rem;
   }
 
   .book-spine {
