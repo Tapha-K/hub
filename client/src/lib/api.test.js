@@ -2,6 +2,7 @@ import { beforeEach, expect, test, vi } from 'vitest';
 
 beforeEach(() => {
   vi.resetModules();
+  vi.unstubAllEnvs();
   global.fetch = vi.fn();
 });
 
@@ -32,6 +33,16 @@ test('requests reading activity for the selected date range', async () => {
   expect(fetch.mock.calls[0][0]).toBe(
     'http://localhost:8080/api/reading-activity?from=2026-05-11&to=2026-08-02',
   );
+});
+
+test('uses the same-origin API proxy in production', async () => {
+  vi.stubEnv('PROD', true);
+  fetch.mockResolvedValueOnce(response({ reading: [], completed: [], archived: [] }));
+
+  const { getBooks } = await import('./api');
+  await getBooks();
+
+  expect(fetch.mock.calls[0][0]).toBe('/api/bookshelf');
 });
 
 function response(body) {
