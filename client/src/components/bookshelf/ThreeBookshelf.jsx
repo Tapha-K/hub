@@ -14,8 +14,16 @@ const BOOK_COLORS = [
 
 export const BOOK_PAGE_COLOR = '#ffffff';
 
-export function getBookshelfCameraFov(width, isBookOpening) {
-  return width < 640 || isBookOpening ? 54 : 34;
+export function getBookshelfCameraFov(width) {
+  return width < 640 ? 54 : 34;
+}
+
+export function getBookScale(width, phase, isHovered = false) {
+  if (phase === 'zooming') return width < 640 ? 1.42 : 1.1;
+  if (phase === 'opening') return width < 640 ? 1.2 : 1.16;
+  if (phase === 'turning') return 1.16;
+  if (phase === 'pulling') return 1.08;
+  return isHovered ? 1.03 : 1;
 }
 
 export function getTurningPageMotion({ shouldTurn, isZooming, turnedLayer, unturnedLayer }) {
@@ -144,6 +152,7 @@ function TurningPage({ book, accent, index, shouldTurn, thickness, height, pageW
 }
 
 function BookModel({ book, index, total, selectedBookId, bookOpeningPhase, openingPageCount, hoveredBookId, onHoverBook, onSelectBook }) {
+  const { size } = useThree();
   const thickness = 0.7;
   const height = 3.08;
   const pageWidth = 2.08;
@@ -159,6 +168,7 @@ function BookModel({ book, index, total, selectedBookId, bookOpeningPhase, openi
   const isBookOpen = isOpening || isZooming;
   const isActive = isPulling || isTurning || isBookOpen;
   const isHovered = hoveredBookId === book.id && !isActive;
+  const activePhase = isSelected ? bookOpeningPhase : null;
   const recordCount = Number(book.recordCount ?? 0);
   const pagesToTurn = book.status === 'COMPLETED' ? 5 : recordCount > 0 ? 3 : 0;
 
@@ -177,7 +187,7 @@ function BookModel({ book, index, total, selectedBookId, bookOpeningPhase, openi
     rotation: isActive
       ? [0, 0, 0]
       : [isHovered ? 0.16 : 0, homeTilt, 0],
-    scale: isZooming ? 1.42 : isOpening ? 1.2 : isTurning ? 1.16 : isPulling ? 1.08 : isHovered ? 1.03 : 1,
+    scale: getBookScale(size.width, activePhase, isHovered),
     bookYaw: isTurning || isBookOpen ? -Math.PI / 2 : 0,
     frontCoverRotation: isBookOpen ? -Math.PI : 0,
     frontCoverLayer: isBookOpen
@@ -312,13 +322,13 @@ function ShelfModel() {
   );
 }
 
-function ResponsiveCamera({ isBookOpening }) {
+function ResponsiveCamera() {
   const { camera, size } = useThree();
 
   useEffect(() => {
-    camera.fov = getBookshelfCameraFov(size.width, isBookOpening);
+    camera.fov = getBookshelfCameraFov(size.width);
     camera.updateProjectionMatrix();
-  }, [camera, isBookOpening, size.width]);
+  }, [camera, size.width]);
 
   return null;
 }
@@ -332,7 +342,7 @@ export function ThreeBookshelf({ books, selectedBookId, bookOpeningPhase, openin
         camera={{ position: [0, 0.3, 9.8], fov: 34 }}
         gl={{ antialias: true, alpha: true }}
       >
-        <ResponsiveCamera isBookOpening={Boolean(bookOpeningPhase)} />
+        <ResponsiveCamera />
         <ambientLight intensity={1.35} />
         <directionalLight
           castShadow
