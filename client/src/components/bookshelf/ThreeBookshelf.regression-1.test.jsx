@@ -2,19 +2,25 @@ import { expect, test } from 'vitest';
 
 import {
   BOOK_PAGE_COLOR,
+  getBookScale,
   getBookshelfCameraFov,
   getTurningPageMotion,
 } from './ThreeBookshelf';
 
-test('데스크톱에서 책을 펼칠 때 확대된 책 전체가 카메라 안에 들어온다', () => {
-  const cameraFov = getBookshelfCameraFov(1024, true);
+test('데스크톱에서 서가 카메라를 움직이지 않고 펼친 책 전체를 보여준다', () => {
+  const cameraFov = getBookshelfCameraFov(1024);
+  const zoomScale = getBookScale(1024, 'zooming');
   const cameraDistance = 9.8 - 3.65;
+  const openingApparentHeight = (3.08 * getBookScale(1024, 'opening')) / (9.8 - 3.05);
+  const zoomApparentHeight = (3.08 * zoomScale) / cameraDistance;
   const visibleHalfHeight = Math.tan((cameraFov * Math.PI) / 360) * cameraDistance;
-  const bookTopFromCamera = -1.31 + 3.08 * 1.42 - 0.3;
+  const bookTopFromCamera = -1.31 + 3.08 * zoomScale - 0.3;
 
   expect(visibleHalfHeight).toBeGreaterThan(bookTopFromCamera);
-  expect(getBookshelfCameraFov(1024, false)).toBe(34);
-  expect(getBookshelfCameraFov(390, false)).toBe(54);
+  expect(zoomApparentHeight).toBeGreaterThan(openingApparentHeight);
+  expect(cameraFov).toBe(34);
+  expect(getBookScale(390, 'zooming')).toBe(1.42);
+  expect(getBookshelfCameraFov(390)).toBe(54);
 });
 
 test('상세 화면으로 확대할 때 마지막 페이지를 완전히 펼친 상태로 고정한다', () => {
