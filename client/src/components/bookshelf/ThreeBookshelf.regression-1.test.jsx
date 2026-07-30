@@ -2,10 +2,12 @@ import { expect, test } from 'vitest';
 
 import {
   BOOK_PAGE_COLOR,
+  BOOK_ZOOM_DEPTH,
   getBookCoverSize,
   getBookLayerVisibility,
   getBookScale,
   getBookshelfCameraFov,
+  getBookshelfCameraY,
   getTurningPageMotion,
 } from './ThreeBookshelf';
 
@@ -16,25 +18,30 @@ test('책을 펼친 뒤에도 오른쪽 페이지 아래의 뒷표지를 유지�
   });
 
   const cover = getBookCoverSize(true, 3.08, 2.08);
-  expect(cover.width - (2.08 - 0.18)).toBeGreaterThan(0.3);
-  expect(cover.height - (3.08 - 0.2)).toBeGreaterThan(0.3);
+  const outerEdge = cover.width - (2.08 - 0.18);
+  const verticalEdge = (cover.height - (3.08 - 0.2)) / 2;
+  expect(outerEdge).toBeCloseTo(verticalEdge);
+  expect(verticalEdge).toBeCloseTo(0.26);
 });
 
 test('데스크톱에서 서가 카메라를 움직이지 않고 펼친 책 전체를 보여준다', () => {
   const cameraFov = getBookshelfCameraFov(1024);
+  const cameraY = getBookshelfCameraY(1024);
   const zoomScale = getBookScale(1024, 'zooming');
-  const cameraDistance = 9.8 - 3.65;
+  const cameraDistance = 9.8 - BOOK_ZOOM_DEPTH;
   const openingApparentHeight = (3.08 * getBookScale(1024, 'opening')) / (9.8 - 3.05);
   const zoomApparentHeight = (3.08 * zoomScale) / cameraDistance;
   const visibleHalfHeight = Math.tan((cameraFov * Math.PI) / 360) * cameraDistance;
   const openCover = getBookCoverSize(true, 3.08, 2.08);
-  const bookTopFromCamera = -1.31 + ((3.08 + openCover.height) / 2) * zoomScale - 0.3;
+  const bookTopFromCamera = -1.31 + ((3.08 + openCover.height) / 2) * zoomScale - cameraY;
 
-  expect(visibleHalfHeight).toBeGreaterThan(bookTopFromCamera);
+  expect(visibleHalfHeight - bookTopFromCamera).toBeGreaterThan(0.15);
   expect(zoomApparentHeight).toBeGreaterThan(openingApparentHeight);
   expect(cameraFov).toBe(34);
+  expect(cameraY).toBe(0.45);
   expect(getBookScale(390, 'zooming')).toBe(1.42);
   expect(getBookshelfCameraFov(390)).toBe(54);
+  expect(getBookshelfCameraY(390)).toBe(0.3);
 });
 
 test('상세 화면으로 확대할 때 마지막 페이지를 완전히 펼친 상태로 고정한다', () => {
