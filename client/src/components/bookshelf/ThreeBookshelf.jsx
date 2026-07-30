@@ -26,6 +26,10 @@ export function getBookScale(width, phase, isHovered = false) {
   return isHovered ? 1.03 : 1;
 }
 
+export function getBookLayerVisibility(isBookOpen) {
+  return { closedBody: !isBookOpen, backCover: true };
+}
+
 export function getTurningPageMotion({ shouldTurn, isZooming, turnedLayer, unturnedLayer }) {
   return {
     rotation: shouldTurn ? -Math.PI : 0,
@@ -169,6 +173,7 @@ function BookModel({ book, index, total, selectedBookId, bookOpeningPhase, openi
   const isActive = isPulling || isTurning || isBookOpen;
   const isHovered = hoveredBookId === book.id && !isActive;
   const activePhase = isSelected ? bookOpeningPhase : null;
+  const layerVisibility = getBookLayerVisibility(isBookOpen);
   const recordCount = Number(book.recordCount ?? 0);
   const pagesToTurn = book.status === 'COMPLETED' ? 5 : recordCount > 0 ? 3 : 0;
 
@@ -213,7 +218,7 @@ function BookModel({ book, index, total, selectedBookId, bookOpeningPhase, openi
       }}
     >
       <animated.group rotation-y={animation.bookYaw}>
-        {!isBookOpen && (
+        {layerVisibility.closedBody && (
           <>
             <RoundedBox
               args={[thickness, height, 0.16]}
@@ -241,16 +246,19 @@ function BookModel({ book, index, total, selectedBookId, bookOpeningPhase, openi
             >
               <meshStandardMaterial color="#eee0c9" roughness={0.95} />
             </RoundedBox>
-            <RoundedBox
-              args={[coverThickness, height, pageWidth]}
-              radius={0.035}
-              smoothness={4}
-              position={[-thickness / 2 - coverThickness / 2, height / 2, -pageWidth / 2]}
-              castShadow
-            >
-              <meshStandardMaterial color={palette.cover} roughness={0.62} metalness={0.04} />
-            </RoundedBox>
           </>
+        )}
+
+        {layerVisibility.backCover && (
+          <RoundedBox
+            args={[coverThickness, height, pageWidth]}
+            radius={0.035}
+            smoothness={4}
+            position={[-thickness / 2 - coverThickness / 2, height / 2, -pageWidth / 2]}
+            castShadow
+          >
+            <meshStandardMaterial color={palette.cover} roughness={0.62} metalness={0.04} />
+          </RoundedBox>
         )}
 
         <animated.group
