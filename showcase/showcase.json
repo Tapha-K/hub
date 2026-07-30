@@ -7,7 +7,8 @@
   "demoVideoUrl": "https://youtu.be/l--fMwX2TmA",
   "thumbnail": "thumbnail.webp",
   "screenshots": [
-    "screenshots/home.webp"
+    "screenshots/home.webp",
+    "screenshots/reading-detail.webp"
   ],
   "problem": "대학생은 과제와 시험, 아르바이트 사이에서 여러 권의 책을 띄엄띄엄 읽기 쉽습니다. 시간이 지난 뒤에는 어떤 책을 어디까지 읽었는지, 그때 어떤 문장이 마음에 남았는지 잊어 다시 시작하는 데 부담을 느낍니다. 잇장은 읽은 시간을 경쟁하거나 연속 출석을 요구하는 대신 마지막 책갈피, 짧은 감상과 글귀를 남겨 독서로 돌아오는 첫 행동을 가볍게 만듭니다.",
   "targetUsers": [
