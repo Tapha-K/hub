@@ -2,10 +2,18 @@ import { expect, test } from 'vitest';
 
 import {
   BOOK_PAGE_COLOR,
+  getBookLayerVisibility,
   getBookScale,
   getBookshelfCameraFov,
   getTurningPageMotion,
 } from './ThreeBookshelf';
+
+test('책을 펼친 뒤에도 오른쪽 페이지 아래의 뒷표지를 유지한다', () => {
+  expect(getBookLayerVisibility(true)).toEqual({
+    closedBody: false,
+    backCover: true,
+  });
+});
 
 test('데스크톱에서 서가 카메라를 움직이지 않고 펼친 책 전체를 보여준다', () => {
   const cameraFov = getBookshelfCameraFov(1024);
