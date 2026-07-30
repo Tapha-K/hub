@@ -239,14 +239,14 @@ export function BookshelfPage({ user, isLoggingOut = false, logoutError = '', on
 
     function turnNextPage(pageNumber) {
       if (pageNumber > pagesToTurn) {
-        openingTimerRef.current = window.setTimeout(zoomAndShowDetail, 700);
+        openingTimerRef.current = window.setTimeout(zoomAndShowDetail, 420);
         return;
       }
 
       openingTimerRef.current = window.setTimeout(() => {
         setOpeningPageCount(pageNumber);
         turnNextPage(pageNumber + 1);
-      }, 700);
+      }, 420);
     }
 
     setShouldStartReading(startInReadingContext);
@@ -260,7 +260,7 @@ export function BookshelfPage({ user, isLoggingOut = false, logoutError = '', on
         if (pagesToTurn > 0) {
           turnNextPage(1);
         } else {
-          openingTimerRef.current = window.setTimeout(zoomAndShowDetail, 700);
+          openingTimerRef.current = window.setTimeout(zoomAndShowDetail, 420);
         }
       }, 520);
     }, 420);
