@@ -14,6 +14,10 @@ const BOOK_COLORS = [
 
 export const BOOK_PAGE_COLOR = '#ffffff';
 
+export function getBookshelfCameraFov(width, isBookOpening) {
+  return width < 640 || isBookOpening ? 54 : 34;
+}
+
 export function getTurningPageMotion({ shouldTurn, isZooming, turnedLayer, unturnedLayer }) {
   return {
     rotation: shouldTurn ? -Math.PI : 0,
@@ -308,13 +312,13 @@ function ShelfModel() {
   );
 }
 
-function ResponsiveCamera() {
+function ResponsiveCamera({ isBookOpening }) {
   const { camera, size } = useThree();
 
   useEffect(() => {
-    camera.fov = size.width < 640 ? 54 : 34;
+    camera.fov = getBookshelfCameraFov(size.width, isBookOpening);
     camera.updateProjectionMatrix();
-  }, [camera, size.width]);
+  }, [camera, isBookOpening, size.width]);
 
   return null;
 }
@@ -328,7 +332,7 @@ export function ThreeBookshelf({ books, selectedBookId, bookOpeningPhase, openin
         camera={{ position: [0, 0.3, 9.8], fov: 34 }}
         gl={{ antialias: true, alpha: true }}
       >
-        <ResponsiveCamera />
+        <ResponsiveCamera isBookOpening={Boolean(bookOpeningPhase)} />
         <ambientLight intensity={1.35} />
         <directionalLight
           castShadow
