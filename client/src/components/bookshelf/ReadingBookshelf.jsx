@@ -128,19 +128,7 @@ export function ReadingBookshelf({
   const [hoveredBookId, setHoveredBookId] = useState(null);
   const [restoringBookId, setRestoringBookId] = useState(null);
   const [restoreError, setRestoreError] = useState('');
-  const openingBook = books.find((book) => book.id === openingBookId);
   const quoteBook = books.find((book) => book.id === quote?.bookId);
-  const targetPageCount = openingBook?.status === 'COMPLETED'
-    ? 5
-    : Number(openingBook?.recordCount ?? 0) > 0
-      ? 3
-      : 0;
-  const phaseLabels = {
-    pulling: '책 꺼내는 중',
-    turning: '표지 정면으로 회전 중',
-    opening: '책 여는 중',
-    zooming: '상세 화면으로 확대 중',
-  };
 
   async function handleRestoreBook(bookId) {
     setRestoringBookId(bookId);
@@ -230,14 +218,6 @@ export function ReadingBookshelf({
                   </li>
                 ))}
               </ul>
-              {bookOpeningPhase && (
-                <p className="three-bookshelf__motion-debug" role="status" aria-live="polite">
-                  <span>{phaseLabels[bookOpeningPhase]}</span>
-                  {bookOpeningPhase === 'opening' && targetPageCount > 0 && (
-                    <strong>{openingPageCount} / {targetPageCount}장</strong>
-                  )}
-                </p>
-              )}
             </div>
             <p className="three-bookshelf__note">책을 누르면 다음에는 지난 갈피부터 이어 읽을 수 있어요.</p>
           </div>
