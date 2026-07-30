@@ -13,14 +13,19 @@ const BOOK_COLORS = [
 ];
 
 export const BOOK_PAGE_COLOR = '#ffffff';
+export const BOOK_ZOOM_DEPTH = 3.35;
 
 export function getBookshelfCameraFov(width) {
   return width < 640 ? 54 : 34;
 }
 
+export function getBookshelfCameraY(width) {
+  return width < 640 ? 0.3 : 0.45;
+}
+
 export function getBookScale(width, phase, isHovered = false) {
   if (phase === 'zooming') return width < 640 ? 1.42 : 1.1;
-  if (phase === 'opening') return width < 640 ? 1.2 : 1.16;
+  if (phase === 'opening') return width < 640 ? 1.2 : 1.14;
   if (phase === 'turning') return 1.16;
   if (phase === 'pulling') return 1.08;
   return isHovered ? 1.03 : 1;
@@ -32,7 +37,7 @@ export function getBookLayerVisibility(isBookOpen) {
 
 export function getBookCoverSize(isBookOpen, height, pageWidth) {
   return isBookOpen
-    ? { height: height + 0.12, width: pageWidth + 0.18 }
+    ? { height: height + 0.32, width: pageWidth + 0.08 }
     : { height, width: pageWidth };
 }
 
@@ -185,7 +190,7 @@ function BookModel({ book, index, total, selectedBookId, bookOpeningPhase, openi
   const pagesToTurn = book.status === 'COMPLETED' ? 5 : recordCount > 0 ? 3 : 0;
 
   const activePosition = isZooming
-    ? [0, -1.31, 3.65]
+    ? [0, -1.31, BOOK_ZOOM_DEPTH]
     : isOpening
       ? [0, -1.31, 3.05]
     : isTurning
@@ -342,6 +347,7 @@ function ResponsiveCamera() {
 
   useEffect(() => {
     camera.fov = getBookshelfCameraFov(size.width);
+    camera.position.y = getBookshelfCameraY(size.width);
     camera.updateProjectionMatrix();
   }, [camera, size.width]);
 
@@ -354,7 +360,7 @@ export function ThreeBookshelf({ books, selectedBookId, bookOpeningPhase, openin
       <Canvas
         shadows
         dpr={[1, 1.25]}
-        camera={{ position: [0, 0.3, 9.8], fov: 34 }}
+        camera={{ position: [0, 0.45, 9.8], fov: 34 }}
         gl={{ antialias: true, alpha: true }}
       >
         <ResponsiveCamera />
