@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { AddBookDialog } from '@/components/bookshelf/AddBookDialog';
 import { BookDetailScreen } from '@/components/bookshelf/BookDetailScreen';
 import { getReadingActivityRange } from '@/components/bookshelf/ReadingActivityCalendar';
+import { QuoteCollectionDialog } from '@/components/bookshelf/QuoteCollectionDialog';
 import { ReadingBookshelf } from '@/components/bookshelf/ReadingBookshelf';
 import { prefersReducedMotion } from '@/lib/motion';
 import {
@@ -84,6 +85,8 @@ export function BookshelfPage({ user, isLoggingOut = false, logoutError = '', on
   const [bookDetailError, setBookDetailError] = useState('');
   const [shouldStartReading, setShouldStartReading] = useState(false);
   const [quote, setQuote] = useState(null);
+  const [isQuoteCollectionOpen, setIsQuoteCollectionOpen] = useState(false);
+  const [selectedContinueBookId, setSelectedContinueBookId] = useState(null);
   const [quoteExposure, setQuoteExposure] = useState(null);
   const [activeQuoteExposureId, setActiveQuoteExposureId] = useState(null);
   const [readingActivity, setReadingActivity] = useState(null);
@@ -275,6 +278,7 @@ export function BookshelfPage({ user, isLoggingOut = false, logoutError = '', on
     await refreshBookData(bookId);
     if (recordInput.quoteText) {
       await getRandomQuote().then(setQuote).catch(() => {});
+      setSelectedContinueBookId(null);
     }
     setReadingActivityRequest((request) => request + 1);
   }
@@ -388,6 +392,8 @@ export function BookshelfPage({ user, isLoggingOut = false, logoutError = '', on
           onRestoreBook={handleRestoreBook}
           quote={quote}
           onOpenQuote={handleOpenQuote}
+          onBrowseQuotes={() => setIsQuoteCollectionOpen(true)}
+          selectedContinueBookId={selectedContinueBookId}
           readingActivity={readingActivity}
           isReadingActivityLoading={isReadingActivityLoading}
           readingActivityError={readingActivityError}
@@ -404,6 +410,16 @@ export function BookshelfPage({ user, isLoggingOut = false, logoutError = '', on
         open={isAddBookOpen}
         onOpenChange={setIsAddBookOpen}
         onCreateBook={handleCreateBook}
+      />
+      <QuoteCollectionDialog
+        open={isQuoteCollectionOpen}
+        onOpenChange={setIsQuoteCollectionOpen}
+        books={books}
+        selectedQuoteId={quote?.id}
+        onSelectQuote={(nextQuote) => {
+          setQuote(nextQuote);
+          setSelectedContinueBookId(nextQuote.bookId);
+        }}
       />
     </>
   );
