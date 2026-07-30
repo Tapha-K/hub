@@ -140,6 +140,10 @@ export function getRandomQuote() {
   return request('/api/quotes/random');
 }
 
+export function getBookQuotes(bookId) {
+  return request(`/api/books/${bookId}/quotes`);
+}
+
 export function createQuoteExposure(quoteId) {
   return request('/api/quote-exposures', {
     method: 'POST',

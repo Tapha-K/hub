@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState } from 'react';
-import { ArrowRight, BookOpen, Plus } from 'lucide-react';
+import { ArrowRight, BookMarked, BookOpen, Plus } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { ReadingActivityCalendar } from '@/components/bookshelf/ReadingActivityCalendar';
@@ -116,13 +116,15 @@ export function ReadingBookshelf({
   onRestoreBook,
   quote,
   onOpenQuote,
+  onBrowseQuotes,
+  selectedContinueBookId,
   readingActivity,
   isReadingActivityLoading,
   readingActivityError,
   onRetryReadingActivity,
   sessionActions,
 }) {
-  const continueBook = getContinueBook(books);
+  const continueBook = books.find((book) => book.id === selectedContinueBookId) ?? getContinueBook(books);
   const [hoveredBookId, setHoveredBookId] = useState(null);
   const [restoringBookId, setRestoringBookId] = useState(null);
   const [restoreError, setRestoreError] = useState('');
@@ -169,10 +171,16 @@ export function ReadingBookshelf({
             <h1 id="reading-shelf-title">읽고 있는 책</h1>
             <p>{books.length}권의 책이 다음 장을 기다리고 있어요.</p>
           </div>
-          <Button className="reading-bookshelf__add" type="button" onClick={onAddBook}>
-            <Plus aria-hidden="true" size={17} strokeWidth={1.8} />
-            책 추가
-          </Button>
+          <div className="reading-bookshelf__actions">
+            <Button type="button" variant="outline" onClick={onBrowseQuotes}>
+              <BookMarked aria-hidden="true" size={17} strokeWidth={1.8} />
+              글귀 모아보기
+            </Button>
+            <Button className="reading-bookshelf__add" type="button" onClick={onAddBook}>
+              <Plus aria-hidden="true" size={17} strokeWidth={1.8} />
+              책 추가
+            </Button>
+          </div>
         </div>
 
         <div className="bookshelf-layout">
