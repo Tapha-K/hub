@@ -30,6 +30,12 @@ export function getBookLayerVisibility(isBookOpen) {
   return { closedBody: !isBookOpen, backCover: true };
 }
 
+export function getBookCoverSize(isBookOpen, height, pageWidth) {
+  return isBookOpen
+    ? { height: height + 0.12, width: pageWidth + 0.18 }
+    : { height, width: pageWidth };
+}
+
 export function getTurningPageMotion({ shouldTurn, isZooming, turnedLayer, unturnedLayer }) {
   return {
     rotation: shouldTurn ? -Math.PI : 0,
@@ -174,6 +180,7 @@ function BookModel({ book, index, total, selectedBookId, bookOpeningPhase, openi
   const isHovered = hoveredBookId === book.id && !isActive;
   const activePhase = isSelected ? bookOpeningPhase : null;
   const layerVisibility = getBookLayerVisibility(isBookOpen);
+  const coverSize = getBookCoverSize(isBookOpen, height, pageWidth);
   const recordCount = Number(book.recordCount ?? 0);
   const pagesToTurn = book.status === 'COMPLETED' ? 5 : recordCount > 0 ? 3 : 0;
 
@@ -251,10 +258,10 @@ function BookModel({ book, index, total, selectedBookId, bookOpeningPhase, openi
 
         {layerVisibility.backCover && (
           <RoundedBox
-            args={[coverThickness, height, pageWidth]}
+            args={[coverThickness, coverSize.height, coverSize.width]}
             radius={0.035}
             smoothness={4}
-            position={[-thickness / 2 - coverThickness / 2, height / 2, -pageWidth / 2]}
+            position={[-thickness / 2 - coverThickness / 2, height / 2, -coverSize.width / 2]}
             castShadow
           >
             <meshStandardMaterial color={palette.cover} roughness={0.62} metalness={0.04} />
@@ -266,10 +273,10 @@ function BookModel({ book, index, total, selectedBookId, bookOpeningPhase, openi
           rotation-y={animation.frontCoverRotation}
         >
           <RoundedBox
-            args={[coverThickness, height, pageWidth]}
+            args={[coverThickness, coverSize.height, coverSize.width]}
             radius={0.035}
             smoothness={4}
-            position={[0, height / 2, -pageWidth / 2]}
+            position={[0, height / 2, -coverSize.width / 2]}
             castShadow
           >
             <meshStandardMaterial color={palette.cover} roughness={0.62} metalness={0.04} />
@@ -277,7 +284,7 @@ function BookModel({ book, index, total, selectedBookId, bookOpeningPhase, openi
           <BookLabel
             book={book}
             accent={palette.accent}
-            position={[coverThickness / 2 + 0.006, height / 2, -pageWidth / 2]}
+            position={[coverThickness / 2 + 0.006, height / 2, -coverSize.width / 2]}
             rotation={[0, Math.PI / 2, 0]}
             size={[pageWidth * 0.78, height * 0.78]}
           />

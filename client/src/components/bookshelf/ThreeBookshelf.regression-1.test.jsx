@@ -2,6 +2,7 @@ import { expect, test } from 'vitest';
 
 import {
   BOOK_PAGE_COLOR,
+  getBookCoverSize,
   getBookLayerVisibility,
   getBookScale,
   getBookshelfCameraFov,
@@ -13,6 +14,10 @@ test('책을 펼친 뒤에도 오른쪽 페이지 아래의 뒷표지를 유지�
     closedBody: false,
     backCover: true,
   });
+
+  const cover = getBookCoverSize(true, 3.08, 2.08);
+  expect(cover.width - (2.08 - 0.18)).toBeGreaterThan(0.3);
+  expect(cover.height - (3.08 - 0.2)).toBeGreaterThan(0.3);
 });
 
 test('데스크톱에서 서가 카메라를 움직이지 않고 펼친 책 전체를 보여준다', () => {
@@ -22,7 +27,8 @@ test('데스크톱에서 서가 카메라를 움직이지 않고 펼친 책 전�
   const openingApparentHeight = (3.08 * getBookScale(1024, 'opening')) / (9.8 - 3.05);
   const zoomApparentHeight = (3.08 * zoomScale) / cameraDistance;
   const visibleHalfHeight = Math.tan((cameraFov * Math.PI) / 360) * cameraDistance;
-  const bookTopFromCamera = -1.31 + 3.08 * zoomScale - 0.3;
+  const openCover = getBookCoverSize(true, 3.08, 2.08);
+  const bookTopFromCamera = -1.31 + ((3.08 + openCover.height) / 2) * zoomScale - 0.3;
 
   expect(visibleHalfHeight).toBeGreaterThan(bookTopFromCamera);
   expect(zoomApparentHeight).toBeGreaterThan(openingApparentHeight);
